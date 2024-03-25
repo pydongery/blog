@@ -124,6 +124,10 @@ paginate: 10
 # The base URL of your site
 baseurl: ""
 
+scholar:
+  style: alpha
+
+
 # ------------ The following options are not recommended to be modified ------------------
 
 kramdown:

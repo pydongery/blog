@@ -9,7 +9,7 @@
 
     <mask id="python-outline">
       <rect width="100%" height="100%" fill="white" />
-      <use id="python" stroke="black" stroke-width="2" href="#python" />
+      <use id="python" stroke="black" stroke-width="7" href="#python" y="-4" x="2" />
     </mask>
 
     <g id="snail">
@@ -20,5 +20,5 @@
     </g>
   </defs>
   <use id="snail" x="0" y="0" href="#snail" mask="url(#python-outline)" />
-  <use id="python" x="0" y="0" href="#python" />
+  <use id="python" x="2" y="-4" href="#python" />
 </svg>
