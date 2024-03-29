@@ -1,0 +1,15 @@
+[palgen]
+output = "build"
+
+[palgen.extensions]
+folders = ["plugins"]
+inline = false
+
+[project]
+name = "blog"
+version = "0.1"
+sources = ["src"]
+
+[benchmark]
+output = "build/benchmark"
+repeat_each = 5

@@ -25,3 +25,5 @@ package-lock.json
 assets/js/dist
 
 **/scratchpad*
+**/build
+**/__pycache__

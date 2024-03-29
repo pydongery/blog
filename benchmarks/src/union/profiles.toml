@@ -1,0 +1,11 @@
+source = "tree.cpp"
+
+[query]
+"generate_tree" = "traceEvents[?name=='InstantiateFunction' && starts_with(@.args.detail, 'generate_tree')].dur"
+"total" = "traceEvents[?name=='ExecuteCompiler'].dur"
+
+[profile.list_contains]
+LIST_CONTAINS = true
+
+[profile.tree_contains]
+LIST_CONTAINS = false
