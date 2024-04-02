@@ -27,3 +27,6 @@ assets/js/dist
 **/scratchpad*
 **/build
 **/__pycache__
+
+**/.vscode
+**/.vs

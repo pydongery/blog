@@ -17,7 +17,7 @@ You can think of a type as the set of all values the type can take on. A [union 
 In C++ we can introduce such types with the `union` keyword.
 
 <br/>
-As per [[class.union]/1](https://eel.is/c++draft/class.union#general-1) unions in C++ are classes. This means they can have constructors, destructors and non-virtual member functions - however they may not have base classes or be used as base classes ([[class.union]/4](https://eel.is/c++draft/class.union#general-4)). Since unions may only have one _active_ non-static data member at a time and an active member is one whose lifetime has begun and not yet ended ([[class.union]/2](https://eel.is/c++draft/class.union#general-2)), we cannot access inactive union members ([[basic.life]/7](https://eel.is/c++draft/basic.life#7)).
+As per [[class.union]/1](https://eel.is/c++draft/class.union#general-1) unions in C++ are classes. This means they can have constructors, destructors and non-virtual member functions - however they may not have base classes or be used as base classes ([[class.union]/4](https://eel.is/c++draft/class.union#general-4)). Since unions may only have one _active_ non-static data member at a time and an active member is one whose lifetime has begun and not yet ended ([[class.union]/2](https://eel.is/c++draft/class.union#general-2)), we cannot access inactive union members ([[basic.life]/7](https://eel.is/c++draft/basic.life#7) with one notable exception, more on that later).
 
 > Note that accessing inactive union members is well defined in C.
 > > If the member used to read the contents of a union object is not the same as the member last used to store a value in the object the appropriate part of the object representation of the value is reinterpreted as an object representation in the new type as described in 6.2.6 (a process sometimes called type punning). This might be a non-value representation.
@@ -38,7 +38,7 @@ As per [[class.union]/1](https://eel.is/c++draft/class.union#general-1) unions i
 {: .prompt-info }
 
 
-Anyway, what we can always do in C++ is switch the active member. [[class.union]/6](https://eel.is/c++draft/class.union#general-6) tells us one way to do so is
+Anyway, what we can always do in C++ is switch the active member. [[class.union]/6](https://eel.is/c++draft/class.union#general-6) tells us one safe way to do so is
 ```c++
 union U{
   M m;
@@ -53,6 +53,7 @@ This allows us to destruct the previous member even if it has a non-trivial dest
 Subsequently this also allows us to activate a new member using a placement new-expression ([[expr.new]/19](https://eel.is/c++draft/expr.new#19)). C++20 also provides a more pleasant way to write this: [`std::construct_at`](https://en.cppreference.com/w/cpp/memory/construct_at).
 
 ## Safely accessing unions
+### Naive implementation
 
 Since we cannot access a union's inactive members safely we need to track whichever member is active. For this purpose we need to wrap the union type in a record (a non-union class type) and use another non-static data member as tag. This is what's called a [tagged union](https://en.wikipedia.org/wiki/Tagged_union), sum type, discriminated union, disjoint union, choice type or simply variant.
 
@@ -76,14 +77,19 @@ struct TaggedUnion {
 ```
 So, how do we keep track of which member is active?
 
-First we want to provide constructors for all alternatives. In every one of them we want to set the tag to an appropriate value - later one we will reuse this tag to retrieve whichever member was active last.
+First we want to provide constructors for all alternatives. In every one of them we want to set the tag to an appropriate value - later on we will reuse this tag to retrieve whichever member was active last.
 ```c++
 explicit TaggedUnion(int integer_) 
-  : data{.integer = integer_}, tag{integer} {}
+  : data{.integer = integer_}
+  , tag{integer} {}
+
 explicit TaggedUnion(char character_) 
-  : data{.character = character_}, tag{character} {}
+  : data{.character = character_}
+  , tag{character} {}
+
 explicit TaggedUnion(float float_) 
-  : data{.floating = float_}, tag{floating} {}
+  : data{.floating = float_}
+  , tag{floating} {}
 ```
 Additionally we should define `operator=` overloads to actually switch the union's active type later on. That'd look something like
 ```cpp
@@ -122,9 +128,15 @@ T get() {
 }
 ```
 
-At some point you will have to decide what to do if the requested member could not be retrieved. It is possible and sometimes desired to throw an exception here - this is what the standard library implementation of 
+At some point you will have to decide what to do if the requested member could not be retrieved. It is possible and sometimes desired to throw an exception here - this is what the standard library implementations typically do. For the scope of this blog post it does not really matter how we do error handling - for this reason let's use `std::unreachable` instead and let it cause UB if something went wrong. That's reasonably easy to debug and the generated assembly will be significantly easier to read.
 
+### Accessor
 
+As you probably have noticed by now: this is rather verbose and only gets worse if we add more alternative types.
+
+Since we can always activate a union member by using a placement new expression and forming a pointer to an object whose lifetime has not yet begun or already ended is fine [[basic.life]/6](https://eel.is/c++draft/basic.life#6). Additionally all union members have the same address ([[class.union]/3 Note 2](http://eel.is/c++draft/class.union#general-note-2)) (TODO relevance? checking member ptr class type + is_function is sufficient).
+
+TODO code example
 
 ## Detour: Friend injection
 By now you are probably thinking "_I came here for weird shit and all I got was ~~this lousy shirt~~ an accessor object?_". Fear not, there are other more clever solutions to this. 
@@ -147,38 +159,7 @@ Since as we all know "_clever_" is just an euphemism for "_abusing obscure langu
 
 ## ADL based safe union access
 
-## Towards variant
-
-Admittedly this is still a lot to type. What we really want is be able to write `Variant<int, float, double, char>` and have it generate something like 
-```c++
-union U {
-  int    alternative_0;
-  float  alternative_1;
-  double alternative_2;
-  char   alternative_3;
-}
-```
-with a bunch of generic helpers for us under the hood.
-
-Unfortunately syntax such as
-```c++
-template <typename... Alternatives>
-union U {
-  Alternatives... alternatives;
-};
-```
-is not valid. In C++26 there is one potential way to get around this by abusing the fact that [P2662 Pack Indexing](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2662r3.pdf) allows us to index lambda init-capture packs. For example something like
-```c++
-template <typename... Ts>
-constexpr auto tuple(Ts... values) {
-    return [...members = values]<std::size_t Idx>() {
-        return members...[Idx];
-    };
-}
-```
-could be used as a rather inconvenient but potentially very low overhead tuple. However, since lambda closure types are never union types ([expr.prim.lambda.closure/1](https://eel.is/c++draft/expr.prim.lambda.closure#1)) this approach is not useable for our variant hackery.
-
-<br/>
+## Visitation
 
 One major obstacle is retrieving the appropriate union member and use it as argument to a function invocation. This pattern is called the [visitor pattern](https://en.wikipedia.org/wiki/Visitor_pattern), the equivalent standard library function for use with [`std::variant`](https://en.cppreference.com/w/cpp/utility/variant) is [`std::visit`](https://en.cppreference.com/w/cpp/utility/variant/visit).
 
@@ -272,8 +253,8 @@ Unfortunately it is not possible to force inlining in a standard way. However mo
 | Compiler | Keyword | Attribute |
 |---|---|---|
 | GCC |  | `[[gnu::always_inline]]` |
-| Clang |  | `[[clang::always_inline]]` or `[[gnu::always_inline]]` |
-| MSVC | `__forceinline` |  |
+| Clang | `__forceinline` | `[[clang::always_inline]]` or `[[gnu::always_inline]]` |
+| MSVC | `__forceinline` | `[[msvc::forceinline]]` |
 
 We can use [Compiler Explorer's clang Opt Pipeline Viewer](https://clang.godbolt.org/z/5MP61jTvr) feature to verify all calls to `visit` were inlined. After the `SimplifyCFG` optimization pass the chained comparisons are now combined into a switch. If we do not force inlining, switches may already be generated during the earlier `InlinerPass` pass and increase the calculated inlining cost beyond the threshold, resulting in multiple jump tables.
 ```llvm
@@ -298,7 +279,7 @@ int visit<0ul, 3ul>(unsigned long):
         jmp     int h<1ul>()
 ```
 
-Turns out clang decided it's cheaper to to not generate a jump table for so few branches. Fortunately with 4 or more cases we get a jump table again. This can be verified by looking at the X86 DAG->DAG Instruction Selection pass.
+Turns out clang decided it's cheaper to to not generate a jump table for so few branches with x86 as target assembler. This might happen, but at least for x86 we get a jump table with 4 or more cases. This can be verified by looking at the X86 DAG->DAG Instruction Selection pass.
 
 As before after the SimplifyCFG pass it will have combined all inlined comparisons into one switch.
 ```llvm
@@ -451,7 +432,7 @@ int visit(std::size_t index) {
   return retval;
 }
 ```
-Let's look at the first two "cases" just before the `iftoswitch` optimization pass. For brevity the following snippet has some pass details removed and identifiers changed to match the code snippet. Additionally there's a little white lie hidden here - it does not actually write directly to `retval` just yet, for now it would use a temporary.
+Let's look at the first two "cases" just before GCC's `iftoswitch` optimization pass. For brevity the following snippet has some pass details removed and identifiers changed to match the code snippet. Additionally there's a little white lie hidden here - it does not actually write directly to `retval` just yet, for now it would use a temporary.
 
 ```c++
 //   basic block 2, loop depth 0, maybe hot
@@ -487,7 +468,7 @@ So unfortunately GCC cannot assume that only one of the "case" branches will be 
 ```cpp
 int visit(std::size_t index) {
   int retval;
-  if (index == 0) { // case 0
+  if (index == 0) {      // case 0
     retval = h<0>();
   }
   else if (index == 1) { // case 1
@@ -510,7 +491,7 @@ int visit(std::size_t index) {
 ```
 instead. We can [manually confirm](https://gcc.godbolt.org/z/G3YhP4Pq8) that this works. Great - so how do we do this generically?
 
-We started with a fold expression so let's get back to that. What we're looking for here is called a [short circuiting](https://en.wikipedia.org/wiki/Short-circuit_evaluation). C++ has two operators capable of that - logical AND (`&&`) [expr.log.and/1](https://eel.is/c++draft/expr.log.and#1) and logical OR (`||`) [expr.log.or/1](https://eel.is/c++draft/expr.log.or#1). So let's fold over `||` instead.
+We already had a pack of indices before, so let's use a fold expression again. What we're looking for is an operator capable of [short circuiting](https://en.wikipedia.org/wiki/Short-circuit_evaluation). C++ has two such operators - logical AND (`&&`) [expr.log.and/1](https://eel.is/c++draft/expr.log.and#1) and logical OR (`||`) [expr.log.or/1](https://eel.is/c++draft/expr.log.or#1). So let's fold over `||` instead.
 
 ```c++
 template <std::size_t... Is>
@@ -522,9 +503,9 @@ int visit(std::size_t index) {
 ```
 As [Compiler Explorer](https://gcc.godbolt.org/z/jGsxKPcxz) can confirm for us: this will convince GCC to generate a jump table. Awesome.
 
-## Visitation
+## Generic visitation
 
-As demonstrated in the previous chapter generating jump tables is possible. So far there has been quite a lot of assumptions - namely that we know the visitor and its return value ahead of time. To implement a generic visitor we will have to drop that assumption. Additionally let's introduce a new function template `get_n<std::size_t I, typename U>(U const&)` that gives us the `I`-th alternative in our union - we can worry about its implementation later.
+As demonstrated in the previous chapter generating jump tables is possible. So far there has been quite a lot of assumptions - namely that we know the visitor and its return value ahead of time. To implement a generic visitor we will have to drop that assumption. Additionally let's introduce a new function template `get_n<std::size_t I, typename U>(U const&)` that gives us the `I`-th alternative of our union - we can worry about its implementation later.
 
 Naively we could do something like
 ```c++
@@ -583,13 +564,138 @@ decltype(auto) visit(U const& storage, std::size_t index, F visitor) {
 }
 ```
 
-## Recursive unions
+## Generating unions
 
-TODO write this section
+So far we have explored ways to retrieve the active member of an existing union type safely both at compile time and runtime, but we haven't yet done any work to generate the underlying union type. 
+
+Essentially we want to be able to write `Variant<int, float, double, char>` and have it generate something like
 ```c++
-#include <memory>
-#include <utility>
+union U {
+  int    alternative_0;
+  float  alternative_1;
+  double alternative_2;
+  char   alternative_3;
+}
+```
 
+Unfortunately syntax such as
+```c++
+template <typename... Alternatives>
+union U {
+  Alternatives... alternatives;
+};
+```
+is not valid. In C++26 there is one potential way to get around this by abusing the fact that [P2662 Pack Indexing](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2662r3.pdf) allows us to index lambda init-capture packs. For example something like
+```c++
+template <typename... Ts>
+constexpr auto tuple(Ts... values) {
+    return [...members = values]<std::size_t Idx>() {
+        return members...[Idx];
+    };
+}
+```
+could be used as a rather inconvenient but potentially very low overhead tuple. However, since lambda closure types are never union types ([expr.prim.lambda.closure/1](https://eel.is/c++draft/expr.prim.lambda.closure#1)) this approach is not useable to generate the underlying union type. We might however be able to use this trick to get the active union member back more easily.
+
+Admittedly this is _still_ a lot to type. What we really want is be able to write `Variant<int, float, double, char>` and have it generate something like 
+```c++
+union U {
+  int    alternative_0;
+  float  alternative_1;
+  double alternative_2;
+  char   alternative_3;
+}
+```
+with a bunch of generic helpers for us under the hood.
+
+Unfortunately syntax such as
+```c++
+template <typename... Alternatives>
+union U {
+  Alternatives... alternatives;
+};
+```
+is not valid. In C++26 there is one potential way to get around this by abusing the fact that [P2662 Pack Indexing](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2662r3.pdf) allows us to index lambda init-capture packs. For example something like
+```c++
+template <typename... Ts>
+constexpr auto tuple(Ts... values) {
+    return [...members = values]<std::size_t Idx>() {
+        return members...[Idx];
+    };
+}
+```
+could be used as a rather inconvenient but potentially very low overhead tuple. However, since lambda closure types are never union types ([expr.prim.lambda.closure/1](https://eel.is/c++draft/expr.prim.lambda.closure#1)) this approach is not useable for our variant hackery. We might however be able to use this trick to get the active union member back more easily. 
+
+The accessor introduced in the first few chapters of this post can be rewritten as
+```c++
+//TODO
+template <typename... Ts>
+constexpr auto generate_accessor(Ts... values) {
+    return [...members = values]<std::size_t Idx>() {
+        return members...[Idx];
+    };
+}
+
+union U {
+  int    alternative_0;
+  float  alternative_1;
+  double alternative_2;
+  char   alternative_3;
+  constexpr static auto accessor = generate_accessor(
+      &U::alternative_0,
+      &U::alternative_1,
+      &U::alternative_2,
+      &U::alternative_3);
+}
+```
+
+### Recursive unions
+
+Recursive types to the rescue! Unfortunately unions cannot have base classes nor be used as base classes ([[class.union]/4](https://eel.is/c++draft/class.union#general-4)), so we need another approach.
+
+All union members are allocated as if they were the sole member of the union, meaning they all have the same address ([[class.union]/3](https://eel.is/c++draft/class.union#general-3)). Since a union member itself can be a union, this guarantee extends to union union members. Therefore 
+
+```c++
+union A {
+  int foo;
+  char bar;
+  float baz;
+};
+```
+has the same guarantees as
+```c++
+union A {
+  float baz;
+  union {
+    char bar;
+    union {
+      float baz;
+    } tail;
+  } tail;
+};
+```
+This pattern can now easily be generalized by using template specializations
+```c++
+template <typename... Ts>
+union RecursiveUnion;
+
+template <typename T>
+union RecursiveUnion<T> {
+  T value;
+};
+
+template <typename T, typename... Ts>
+union RecursiveUnion<T, Ts...>{
+  T value;
+  RecursiveUnion<Ts...> tail;
+};
+```
+
+Unfortunately initializing unions requires the initializer list to have at most one element ([[dcl.init.aggr]/20](https://eel.is/c++draft/dcl.init.aggr#20)), hence we must name which member we want to initialize _unless_ we want to initialize the first one ([[dcl.init.aggr]/3.2](https://eel.is/c++draft/dcl.init.aggr#3.2)). Since designators must name a _direct_ member of the class under construction ([[dcl.init.aggr]/3.1](https://eel.is/c++draft/dcl.init.aggr#3.1)) this gets rather awkward quickly, so let's instead define a recursive constructor.
+
+Let's make an assumption: Alternatives of a variant type must be unique. A variant cannot have the same alternative type more than once. This means we can now unambiguously determine the index of a specific type within all alternative types of the variant, which will also come in handy for the tag.
+
+Finding the index of a type within a pack can be done by counting up _until_ the type at the current position within the pack matches the searched-for type. To avoid recursion we can fold over the pack. Doing something _until_ a predicate matches in the context of fold expressions always means we want to use a short-circuiting operator, so let's do just that.
+```c++
 template <typename T, typename... Ts>
 consteval std::size_t get_type_index(){
     std::size_t index = 0;
@@ -599,109 +705,117 @@ consteval std::size_t get_type_index(){
 
 template <typename T, typename... Ts>
 constexpr inline std::size_t type_index = get_type_index<T, Ts...>();
+```
 
+We can now add some constructors to our recursive union.
+
+```c++
 template <std::size_t N>
 using size_constant = std::integral_constant<std::size_t, N>;
 
 template <typename... Ts>
 union RecursiveUnion;
 
+template <typename T>
+union RecursiveUnion<T> {
+  T value;
+  
+  constexpr RecursiveUnion(size_constant<0>, T&& obj) 
+    : value{std::forward<T>(obj)} {
+    // cannot delegate anymore, construct `value` member
+  }
+};
+
 template <typename T, typename... Ts>
 union RecursiveUnion<T, Ts...> {
   T value;
   RecursiveUnion<Ts...> tail;
 
-  constexpr RecursiveUnion(size_constant<0>, T&& obj) : value{std::forward<T>(obj)} {}
+  constexpr RecursiveUnion(size_constant<0>, T&& obj)
+    : value{std::forward<T>(obj)} {
+    // current index is 0, construct `value` member
+  }
+
   template <std::size_t N, typename U>
-  constexpr RecursiveUnion(size_constant<N>, U&& obj) : tail{size_constant<N-1>{}, std::forward<U>(obj)} {}
+  constexpr RecursiveUnion(size_constant<N>, U&& obj)
+    : tail{size_constant<N-1>{}, std::forward<U>(obj)} {
+    // decrement N by one and delegate to the next constructor
+  }
 };
+```
 
-template <typename T>
-union RecursiveUnion<T> {
-  T value;
-  
-  constexpr RecursiveUnion(size_constant<0>, T&& obj) : value{std::forward<T>(obj)} {}
-};
-
-template <std::size_t Idx, typename U>
-constexpr decltype(auto) get_n(U const& union_) {
-  if constexpr (Idx == 0) {
-    return union_.value;
-  }
-  else if constexpr (Idx == 1) {
-    return union_.tail.value;
-  }
-  else if constexpr (Idx == 2) {
-    return union_.tail.tail.value;
-  }
-  else {
-    return get_n<Idx - 3>(union_.tail.tail.tail);
-  }
-}
-
-template <std::size_t Idx, typename V>
-constexpr decltype(auto) get(V&& variant_) {
-  return get_n<Idx>(std::forward<V>(variant_).storage);
-}
-
+To get everything started, the variant type's constructor must pass the constructor of its `RecursiveUnion` member the desired type index.
+```c++
 template <typename... Ts>
 struct Variant {
-  using union_type = RecursiveUnion<Ts...>;
-  union_type storage;
-  std::size_t index;
+  RecursiveUnion<Ts...> value;
+  std::size_t           index;
 
   template<typename T>
-        requires ( std::same_as<T, Ts> || ... )
-    Variant( T&& t )
-        : index( pack_index<T, Ts...>::value ),
-        storage( std::integral_constant<std::size_t, pack_index<T,Ts...>::value>{}, std::forward<T>(t) )
-    { }
-
-    Variant( const Variant& ) = delete;
-    Variant& operator = ( const Variant& ) = delete;
-    Variant( Variant&& ) = delete;
-    Variant& operator = ( Variant&& ) = delete;
-
-  template <std::size_t... Idx>
-  constexpr decltype(auto) dispatch(std::index_sequence<Idx...>, auto callback) const {
-    using return_type = std::common_type_t<decltype(callback(get_n<Idx, union_type>(storage)))...>;
-    if constexpr (std::same_as<return_type, void>) {
-      (void)((index == Idx ? callback(get_n<Idx, union_type>(storage)), true : false) || ...);
-    }
-    else {
-      union {
-        char dummy;
-        return_type value;
-      } ret;
-
-      bool const success = ((index == Idx ? std::construct_at(&ret.value, callback(get_n<Idx, union_type>(storage))), true : false) || ...);
-      if (success) [[likely]] {
-        return ret.value;
-      }
-      else [[unlikely]]{
-        std::unreachable();
-      }
-    }    
-  }
-
-  constexpr decltype(auto) visit(auto F) const {
-    return dispatch(std::make_index_sequence<sizeof...(Ts)>{}, F);
-  }
+    requires ( std::same_as<T, Ts> || ... )
+  explicit Variant(T&& obj)
+    : index{type_index<T, Ts...>}
+    , value{size_constant<type_index<T, Ts...>>{}, std::forward<T>(t)}
+  { }
 };
+```
 
-Variant<int, float, char, double, long long, unsigned> variant = 'A';
-
-#include <cstdio>
-int main(int argc, char** argv) {
-  auto res = variant.visit([](auto c) { return (int)c; });
-  printf("%d", res);
+The same recursive approach can be reused to finally implement `get_n`.
+```c++
+template <std::size_t Idx, typename U>
+constexpr decltype(auto) get_n(U&& union_) {
+  if constexpr (Idx == 0) {
+    return std::forward<U>(union_).value;
+  }
+  else {
+    return get_n<Idx - 1>(std::forward<U>(union_).tail);
+  }
 }
 ```
 
-## Union trees
+### Reducing recursion depth
 
-Used to minimize compile time access and ctor times. TODO.
+TODO explain why, use flamegraphs
 
+To reduce the recursion depth of `get_n` it is advisable to handle more than one alternative at a time. This is what most standard libraries do (link libstdc++ and MSVC STL). Let's update `get_n` with this optimization.
+
+```c++
+template <std::size_t Idx, typename U>
+constexpr decltype(auto) get_n(U&& union_) {
+  if constexpr (Idx == 0) {
+    return std::forward<U>(union_).value;
+  }
+  else if constexpr (Idx == 1) {
+    return std::forward<U>(union_).tail.value;
+  }
+  else if constexpr (Idx == 2) {
+    return std::forward<U>(union_).tail.tail.value;
+  }
+  else {
+    return get_n<Idx - 3>(std::forward<U>(union_).tail.tail.tail);
+  }
+}
+```
+
+The same approach can be used to reduce recursion depth of the delegating constructors.
+
+TODO code example
+
+
+### Union trees
+
+Another way of reducing recursion depth is by changing the structure of the underlying union. While the recursion depth of the simple `RecursiveUnion` type grows lineary, the maximum depth of a balanced binary tree only grows logarithmically.
+
+
+The real challenge is generating such a tree. Unfortunately actually balancing it is rather expensive, so let's instead recursively merge adjacent leafs or subtrees until there is only one node left over. This should gives us a somewhat balanced tree, benchmarking will tell us if that's good enough.
+
+TODO code example
+
+
+TODO plot N vs log(n) for n in [0, 30]
+Since union trees can actually be more expensive for small unions, it is advisable to only switch to this strategy for large unions. The final implementation can be found at [TODO](https://github.com/tsche/variant).
+
+TODO push final implementation to github
 
 ## Inverted variant
 
