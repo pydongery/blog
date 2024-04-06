@@ -775,7 +775,6 @@ constexpr decltype(auto) get_n(U&& union_) {
 ```
 
 ### Reducing recursion depth
-
 TODO explain why, use flamegraphs
 
 To reduce the recursion depth of `get_n` it is advisable to handle more than one alternative at a time. This is what most standard libraries do (link libstdc++ and MSVC STL). Let's update `get_n` with this optimization.
@@ -798,10 +797,71 @@ constexpr decltype(auto) get_n(U&& union_) {
 }
 ```
 
-The same approach can be used to reduce recursion depth of the delegating constructors.
+To go one step further we can also reduce recursion depth of the delegating constructors. To do so we need to add specializations of `RecursiveUnion`. 
 
-TODO code example
+Since this makes implementing `get_n` a lot nastier (we can no longer assume to have a `value` member!) let's implement `get_n` as non-static member function instead. This implies it needs to be implemented as non-static member function for all other specializations of `RecursiveUnion` as well.
 
+```cpp
+template <typename T1, typename T2, typename T3, typename T4, typename... Ts>
+union RecursiveUnion<T1, T2, T3, T4, Ts...> {
+  T1 alternative_1;
+  T2 alternative_2;
+  T3 alternative_3;
+  T4 alternative_4;
+  RecursiveUnion<Ts...> tail;
+
+  constexpr RecursiveUnion(size_constant<0>, T&& obj)
+    : value{std::forward<T>(obj)} {}
+  
+  constexpr RecursiveUnion(size_constant<1>, T&& obj)
+    : value{std::forward<T>(obj)} {}
+  
+  constexpr RecursiveUnion(size_constant<2>, T&& obj)
+    : value{std::forward<T>(obj)} {}
+  
+  constexpr RecursiveUnion(size_constant<3>, T&& obj)
+    : value{std::forward<T>(obj)} {}
+
+  template <std::size_t N, typename U>
+  constexpr RecursiveUnion(size_constant<N>, U&& obj)
+    : tail{size_constant<N-4>{}, std::forward<U>(obj)} {}
+
+  template <std::size_t N>
+  constexpr decltype(auto) get_n() {
+    if constexpr (N == 0) {
+      return alternative_1;
+    } else if constexpr (N == 1) {
+      return alternative_2;
+    } else if constexpr (N == 2) {
+      return alternative_3;
+    } else if constexpr (N == 3) {
+      return alternative_4;
+    } else {
+      return tail.get_n<N-4>();
+    }
+  }
+};
+```
+
+With `get_n` being a non-static member function we unfortunately must now duplicate it with all possible combinations of [cv-qualifiers](https://eel.is/c++draft/dcl.decl.general#nt:cv-qualifier) to handle all possible `this` pointer types ([[class.mfct.non.static]/3](https://eel.is/c++draft/class.mfct.non.static#3)). Fortunately C++23 gave us explicit object member functions ([[dcl.fct]/6](https://eel.is/c++draft/dcl.fct#6)), so we can simply rewrite the `get_n` member function as
+```cpp
+template <std::size_t N, typename Self>
+constexpr decltype(auto) get_n(this Self&& self) {
+  if constexpr (N == 0) {
+    return std::forward<Self>(self).alternative_1;
+  } else if constexpr (N == 1) {
+    return std::forward<Self>(self).alternative_2;
+  } else if constexpr (N == 2) {
+    return std::forward<Self>(self).alternative_3;
+  } else if constexpr (N == 3) {
+    return std::forward<Self>(self).alternative_4;
+  } else {
+    return std::forward<Self>(self).tail.template get_n<N - 4>();
+  }
+}
+```
+
+The implementations of `get_n` for the other specializations is analogous to this.
 
 ### Union trees
 
