@@ -4,6 +4,7 @@ date: 2024-03-17T23:36:29+00:00
 categories: [C++]
 tags: [C++, Metaprogramming]
 author: Che
+bokeh: true
 ---
 
 In this blog post we will take a closer look at unions and how variant-like types can be implemented. While most of the example code will work with earlier C++ versions (albeit with slight modifications) most of the example code will assume at least C++23.
@@ -811,8 +812,9 @@ The real challenge is generating such a tree. Unfortunately actually balancing i
 
 TODO code example
 
+{% include_relative depth_plot.html %}
 
-TODO plot N vs log(n) for n in [0, 30]
+
 Since union trees can actually be more expensive for small unions, it is advisable to only switch to this strategy for large unions. The final implementation can be found at [TODO](https://github.com/tsche/variant).
 
 TODO push final implementation to github
