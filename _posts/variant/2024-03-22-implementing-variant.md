@@ -595,36 +595,7 @@ constexpr auto tuple(Ts... values) {
     };
 }
 ```
-could be used as a rather inconvenient but potentially very low overhead tuple. However, since lambda closure types are never union types ([expr.prim.lambda.closure/1](https://eel.is/c++draft/expr.prim.lambda.closure#1)) this approach is not useable to generate the underlying union type. We might however be able to use this trick to get the active union member back more easily.
-
-Admittedly this is _still_ a lot to type. What we really want is be able to write `Variant<int, float, double, char>` and have it generate something like 
-```c++
-union U {
-  int    alternative_0;
-  float  alternative_1;
-  double alternative_2;
-  char   alternative_3;
-}
-```
-with a bunch of generic helpers for us under the hood.
-
-Unfortunately syntax such as
-```c++
-template <typename... Alternatives>
-union U {
-  Alternatives... alternatives;
-};
-```
-is not valid. In C++26 there is one potential way to get around this by abusing the fact that [P2662 Pack Indexing](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2662r3.pdf) allows us to index lambda init-capture packs. For example something like
-```c++
-template <typename... Ts>
-constexpr auto tuple(Ts... values) {
-    return [...members = values]<std::size_t Idx>() {
-        return members...[Idx];
-    };
-}
-```
-could be used as a rather inconvenient but potentially very low overhead tuple. However, since lambda closure types are never union types ([expr.prim.lambda.closure/1](https://eel.is/c++draft/expr.prim.lambda.closure#1)) this approach is not useable for our variant hackery. We might however be able to use this trick to get the active union member back more easily. 
+could be used as a rather inconvenient but potentially very low overhead tuple. However, since lambda closure types are never union types ([expr.prim.lambda.closure/1](https://eel.is/c++draft/expr.prim.lambda.closure#1)) this approach is not usable to generate the underlying union type for our variant. We might however be able to use this trick to get the active union member back more easily. 
 
 The accessor introduced in the first few chapters of this post can be rewritten as
 ```c++
@@ -861,7 +832,7 @@ constexpr decltype(auto) get_n(this Self&& self) {
 }
 ```
 
-The implementations of `get_n` for the other specializations is analogous to this.
+The implementations of `get_n` for the other specializations are analogous to this.
 
 ### Union trees
 
