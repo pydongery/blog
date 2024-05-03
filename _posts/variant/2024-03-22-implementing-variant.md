@@ -10,15 +10,32 @@ bokeh: true
 In this blog post we will take a closer look at unions and how variant-like types can be implemented. While most of the example code will work with earlier C++ versions (albeit with slight modifications) most of the example code will assume at least C++23.
 
 ## Back to basics
-You can think of a type as the set of all values the type can take on. A [union type](https://en.wikipedia.org/wiki/Union_type) is therefore a mathematical union of types, meaning it can take on all values of its member types. In other words:
+You can think of a type as the set of all values the type can take on. A [union type](https://en.wikipedia.org/wiki/Union_type) is therefore a mathematical union of types, meaning it can take on all values of its member types.
+In other words:
 > To put it bluntly, unions are a hack to subvert the C++ type system
 >
 > [N2248 - Toward a More Perfect Union](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2248.html)
 
-In C++ we can introduce such types with the `union` keyword.
+In C++ we can introduce such types with the `union` keyword. To understand why they are also called "sum types" consider the following example:
+
+```cpp
+struct Product {
+  unsigned char first;
+  bool second;
+};
+
+union Sum {
+  unsigned char first;
+  bool second;
+};
+```
+`unsigned char` has the value range 0-255 while `bool` can have only two valid values - `true` or `false`. Therefore the size of the set of values is 256 for `unsigned char` and 2 for `bool`.
+
+The value range of the record `Product` is therefore the _cartesian product_ of the two, or in other words it can take on 256×2=512 distinct values. The value range of the union `Sum` however is the _sum_ of the value ranges of its members, or in other words 256+2=258 - all of those are valid values for `Sum`, it may _either_ hold one of the 256 valid values for the `unsigned char` member _or_ one of the 2 valid values for the `bool` member.
+
 
 <br/>
-As per [[class.union]/1](https://standards.pydong.org/c++/class.union#general-1) unions in C++ are classes and therefore can have constructors and destructors. Additionally they can have non-virtual member functions - however they may not have base classes or be used as base classes ([[class.union]/4](https://standards.pydong.org/c++/class.union#general-4)). Since unions may only have one _active_ non-static data member at a time, we cannot access inactive union members ([[basic.life]/7](https://standards.pydong.org/c++/basic.life#7) with one notable exception, more on that later). An active member is one whose lifetime has begun and not yet ended ([[class.union]/2](https://standards.pydong.org/c++/class.union#general-2)).
+As per [[class.union]/1](https://standards.pydong.org/c++/class.union#general-1) unions in C++ are classes. Additionally they can have non-virtual member functions, including constructors and destructors. However they may not have base classes or be used as base classes ([[class.union]/4](https://standards.pydong.org/c++/class.union#general-4)). Since unions may only have one _active_ non-static data member at a time, we cannot access inactive union members ([[basic.life]/7](https://standards.pydong.org/c++/basic.life#7) with one notable exception, more on that later). An active member is one whose lifetime has begun and not yet ended ([[class.union]/2](https://standards.pydong.org/c++/class.union#general-2)).
 
 > Note that accessing inactive union members is well defined in C.
 > > If the member used to read the contents of a union object is not the same as the member last used to store a value in the object the appropriate part of the object representation of the value is reinterpreted as an object representation in the new type as described in 6.2.6 (a process sometimes called type punning). This might be a non-value representation.
@@ -39,7 +56,7 @@ As per [[class.union]/1](https://standards.pydong.org/c++/class.union#general-1)
 {: .prompt-info }
 
 
-Anyway, what we can always do in C++ is switch the active member. [[class.union]/6](https://standards.pydong.org/c++/class.union#general-6) tells us one safe way to do so is
+[[class.union]/6](https://standards.pydong.org/c++/class.union#general-6) highlights one particularly interesting way to switch the active union member:
 ```c++
 union U{
   M m;
@@ -55,7 +72,7 @@ Subsequently this also allows us to activate a new member using a placement new-
 
 ## Safely accessing unions naively
 
-Since we cannot access a union's inactive members safely we need to track whichever member is active. For this purpose we need to wrap the union type in a record (a non-union class type) and use another non-static data member as tag. This is what's called a [tagged union](https://en.wikipedia.org/wiki/Tagged_union), sum type, discriminated union, disjoint union, choice type or simply variant.
+Since we cannot access a union's inactive members safely we need to track whichever member is active. For this purpose we need to wrap the union type in a record (a non-union class type) and use another non-static data member as tag. This is what's called a [tagged union](https://en.wikipedia.org/wiki/Tagged_union), discriminated union, choice type or simply variant.
 
 ```c++
 struct TaggedUnion {
