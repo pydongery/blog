@@ -147,7 +147,30 @@ T get() {
 
 At some point you will have to decide what to do if the requested member could not be retrieved. It is possible and sometimes desired to throw an exception here - this is what the standard library implementations typically do. For the scope of this blog post it does not really matter how we do error handling - for this reason let's use `std::unreachable` instead and let it cause UB if something went wrong. That's reasonably easy to debug and the generated assembly will be significantly easier to read.
 
-## Detour: Type lists and value lists
+## Detour: Type lists
+At various points in this article we will need to store and index a pack of types. We could use `std::tuple` for this, but since we're only ever really interested in the types, a more minimal implementation can be utilized instead. The main issue is retrieving the type contained at an arbitrary index within the pack of types our type list is templated over, so let's look at that separately and defer its implementation to an alias template `pack::get`.
+
+The type list itself can therefore simply be defined as
+```c++
+namespace pack {
+template <std::size_t Idx, typename... Ts>
+using get = /* TODO */;
+}
+
+template <typename... Ts>
+struct TypeList{
+  template <std::size_t Idx>
+  using get = pack::get<Idx, Ts...>;
+};
+```
+### Recursive indexing
+The obvious approach to index that pack is by recursion. This will look roughly like
+
+
+### Paging
+### Intrinsic
+
+### Proper pack indexing with C++26
 
 ## Generic accessor
 
@@ -157,28 +180,21 @@ Since we can always activate a union member by using a placement new expression 
 
 TODO code example
 
-## Detour: Friend injection
-By now you are probably thinking "_I came here for weird shit and all I got was ~~this lousy shirt~~ an accessor?_". Fear not, there are other more clever solutions to this. 
+Ideally we would do something along the lines of
+```cpp
+template <auto...>
+struct StorageProxy;
 
-Since as we all know "_clever_" is just an euphemism for "_abusing obscure language features that probably shouldn't be a thing_" let's take a moment to talk about everyone's second favorite language feature ADL and friend injection.
+template <typename U, typename... Ts, Ts U::*... Ptrs>
+struct StorageProxy<Ptrs...>{
+  using alternatives = util::TypeList<Ts...>;
+  /* ... */
+};
 
-> Should you? Probably not.
-> > **2118. Stateful metaprogramming via friend injection**
-> >
-> > Defining a friend function in a template, then referencing that function later provides a means of capturing and retrieving metaprogramming state. This technique is arcane and should be made ill-formed.
-> >
-> > **Notes from the May, 2015 meeting:**
-> >
-> > CWG agreed that such techniques should be ill-formed, although the mechanism for prohibiting them is as yet undetermined.
-> 
-> [C++ Standard Core Language Active Issues](https://www.open-std.org/jtc1/sc22/wg21/docs/cwg_active.html#2118)
-{: .prompt-warning }
+```
+unfortunately at the time of writing GCC has a bug that prevents it from compiling this successfully.
+TODO explain workaround
 
-(Pro Tip: The [C++ Standard Core Language Active Issues](https://www.open-std.org/jtc1/sc22/wg21/docs/cwg_active.html) list is a great resource to learn about extremely obscure C++ "features")
-
-## ADL based union accessor
-
-TODO
 
 ## Generating unions
 
@@ -583,6 +599,24 @@ constexpr std::size_t index() const {
 Theoretically checking against `__builtin_constant_p(storage)` (or `std::is_within_lifetime(&storage)` in C++26) should be sufficient but at the time of writing clang has issues with this. Additionally we need to provide an `index()` member function in the underlying variadic union that does pretty much the same thing - check whether either member is active and descend into the active one until the final active member is found.
 
 
+Alternative:
+```cpp
+struct Variant {
+    union U {
+    private: // needed for working around POD for the purpose of layout
+        char alternative_1[7];
+        float alternative_2; 
+    };
+    
+    [[no_unique_address]] U u;
+    unsigned char tag;
+};
+static_assert(sizeof(Variant)==8);
+```
+
+> Lénárd Szolnoki — Today at 1:14 PM
+> you can reduce padding with a distinct discriminator too
+> make the union [[no_unique_address]], put the discriminator in the padding 
 
 ## Visitation
 
