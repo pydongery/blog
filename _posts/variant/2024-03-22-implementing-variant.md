@@ -867,6 +867,24 @@ int visit(std::size_t index) {
 }
 ```
 Assuming `Is` is the index sequence [0, 5] we can now see that this is expands to
+
+https://cppinsights.io/s/4207098f
+```cpp
+template<>
+int visit<0, 1, 2, 3, 4, 5>(std::size_t index)
+{
+  int retval;
+  (index == 0UL ? (retval = h<0UL>()) , 0 : 0),
+    ((index == 1UL ? (retval = h<1UL>()) , 0 : 0), 
+      ((index == 2UL ? (retval = h<2UL>()) , 0 : 0) , 
+        ((index == 3UL ? (retval = h<3UL>()) , 0 : 0) , 
+          ((index == 4UL ? (retval = h<4UL>()) , 0 : 0) , 
+            (index == 5UL ? (retval = h<5UL>()) , 0 : 0)))));
+  return static_cast<int &&>(retval);
+}
+```
+
+
 ```cpp
 int visit(std::size_t index) {
   int retval;
@@ -961,6 +979,22 @@ int visit(std::size_t index) {
 }
 ```
 As [Compiler Explorer](https://gcc.godbolt.org/z/jGsxKPcxz) can confirm for us: this will convince GCC to generate a jump table. Awesome.
+https://cppinsights.io/s/827e0ae9
+```cpp
+template<>
+int visit<0, 1, 2, 3, 4, 5>(std::size_t index)
+{
+  int value;
+  static_cast<void>(
+    (index == 0UL ? (value = h<0UL>()) , true : false) || 
+      ((index == 1UL ? (value = h<1UL>()) , true : false) || 
+        ((index == 2UL ? (value = h<2UL>()) , true : false) || 
+          ((index == 3UL ? (value = h<3UL>()) , true : false) || 
+            ((index == 4UL ? (value = h<4UL>()) , true : false) || 
+              (index == 5UL ? (value = h<5UL>()) , true : false))))));
+  return static_cast<int &&>(value);
+}
+```
 
 ## Generic visitation
 
