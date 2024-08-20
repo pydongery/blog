@@ -6,7 +6,7 @@ tags: [Python, shenanigans, preprocessing, language extensions]
 author: Che
 ---
 
-Every now and the you hear outrageous claims such as "Python has no preprocessor". 
+Every now and then you hear outrageous claims such as "Python has no preprocessor". 
 
 This is simply not true. In fact, Python has the **best preprocessor** of all languages - it quite literally allows us to do whatever we want, and a lot more. It's just a little tricky to (ab)use.
 
@@ -157,7 +157,7 @@ Here's the list of replacements:
 |      `--x`       | `(OP, '-'), (OP, '-'), (NAME, 'x')` | `(x, x := x - 1)[1]` |
 |------------------|-------------------------------------|----------------------|
 
-Simply replacing these token sequences in the token stream is striclty speaking not sufficient, since it will fail for expressions such as `x++ - -y`, however this can easily be disambiguated with extra parenthesis: `x++ - (-y)`.
+Simply replacing these token sequences in the token stream is strictly speaking not sufficient, since it will fail for expressions such as `x++ - -y`, however this can easily be disambiguated with extra parenthesis: `x++ - (-y)`.
 
 [incdec.py](https://github.com/dankeyy/incdec.py), the Python project that inspired this blog post, uses regular expressions to do the replacements. While it does try to prevent replacements inside string literals, it is still rather brittle. You can find a reimplementation that directly modifies the token stream at [magic.incdec](https://github.com/Tsche/magic_codec/blob/master/src/magic_codec/builtin/incdec.py).
 
@@ -222,7 +222,7 @@ Tokens of the type `OP` are interesting for primary required machinery - if the 
 
 Finally to fix indentation every token of type `NL` must be followed by a token of type `INDENT` with an appropriate amount of whitespace for the current indentation level as content.
 
-Since Python uses curly braces for dictionaries, this can be slightly improved upon by only adjusting the indentation level only if the `{` token is followed by a newline and respectively the `}` token preceeded by a newline. Limiting dictionaries with the curly brace syntax to a single line might seem rather limiting, but remember that 
+Since Python uses curly braces for dictionaries, this can be slightly improved upon by only adjusting the indentation level only if the `{` token is followed by a newline and respectively the `}` token preceded by a newline. Limiting dictionaries with the curly brace syntax to a single line might seem rather limiting, but remember that 
 ```py
 dictionary = { \
     'a': 420,  \
@@ -475,7 +475,7 @@ On instance['scores'][1]:
 
 ## Conclusion
 
-Custom codecs in conjunction with path configuration files can drastically change the behavior of the Python interpreter. While most of the examples here are written purely for entertainment purposes, there are definitely valid uses for this technique. One notable example is [pythonql](https://github.com/pythonql/pythonql), which is a query language extension for Python.
+Custom codecs in conjunction with path configuration files can drastically change the behavior of the Python interpreter. While most of the examples here are written purely for entertainment purposes, there are definitely valid uses for this technique. One notable example is [pythonql](https://github.com/pythonql/pythonql), which is a query language extension for Python. Another notable example is [future-typing](https://github.com/PrettyWood/future-typing) which backports generic type hints and union syntax via `|` to Python 3.6+.
 
 If you want to play around with your own preprocessors but do not wish to mess with `site-packages` directly, introduce path configuration files and write all the boilerplate yourself, you can instead use [`magic_codec`](https://github.com/Tsche/magic_codec). 
 
