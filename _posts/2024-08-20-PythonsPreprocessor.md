@@ -475,7 +475,7 @@ On instance['scores'][1]:
 
 ## Conclusion
 
-Custom codecs in conjunction with path configuration files can drastically change the behavior of the Python interpreter. While most of the examples here are written purely for entertainment purposes, there are definitely valid uses for this technique. One notable example is [pythonql](https://github.com/pythonql/pythonql), which is a query language extension for Python. Another notable example is [future-typing](https://github.com/PrettyWood/future-typing) which backports generic type hints and union syntax via `|` to Python 3.6+.
+Custom codecs in conjunction with path configuration files can drastically change the behavior of the Python interpreter. While most of the examples here are written purely for entertainment purposes, there are definitely valid uses for this technique. One notable example is [pythonql](https://github.com/pythonql/pythonql), which is a query language extension for Python. Another notable example is [future-typing](https://github.com/PrettyWood/future-typing) which backports generic type hints and union syntax via `|` to Python 3.6+. Similar projects include [future-fstrings](https://github.com/asottile-archive/future-fstrings) and [future-annotations](https://github.com/asottile-archive/future-annotations).
 
 If you want to play around with your own preprocessors but do not wish to mess with `site-packages` directly, introduce path configuration files and write all the boilerplate yourself, you can instead use [`magic_codec`](https://github.com/Tsche/magic_codec). 
 
