@@ -114,8 +114,8 @@ def search_function(encoding) -> Optional[codecs.CodecInfo]:
         return codecs.CodecInfo(
           name=encoding,
           encode=codecs.utf_8_encode,
-          decode=decode, # our decode function
-          incrementaldecoder=Decoder # our incremental decoder
+          decode=decode,              # our decode function
+          incrementaldecoder=Decoder  # our incremental decoder
       )
 ```
 
@@ -189,7 +189,7 @@ assert ((i, i := i + 1)[1]) == 6
 assert ((i, i := i - 1)[1]) == 5
 assert ((i, i := i + 1)[0]) == 5
 assert i == 6
-assert (((i, i :=i + 1)[1]),'i++') == (7, 'i++')
+assert (((i, i := i + 1)[1]),'i++') == (7, 'i++')
 print ("PASSED")
 
 ```
