@@ -15,7 +15,7 @@ I'm mostly interested in C++ "compile time" shenanigans, Python tomfoolery, RPC 
 
 Some of my recent projects include:
 - **[repr](https://github.com/Tsche/repr) / [repr.wtf](https://repr.wtf)**: A C++ static reflection library that mimics Python's `repr()`.
-- **[magic_codec](https://github.com/Tsche/magic_codec) / [Python's Preprocessor](posts/PythonsPreprocessor)**: A modular Python preprocessing utility that uses a custom codec.
+- **[magic_codec](https://github.com/Tsche/magic_codec) / [Python's Preprocessor](/posts/PythonsPreprocessor)**: A modular Python preprocessing utility that uses a custom codec.
 - **[slo::variant](https://github.com/Tsche/variant/tree/develop) / blog post TBD**: Mostly compliant `std::variant` implementation that does some experimental optimizations, including rearranging the underlying storage as a tree to reduce maximum recursion depth for alternative retrieval
 - **[crashbench](https://github.com/Tsche/crashbench)**: Compile time benchmarking and diagnostic/death test utility. This uses a custom DSL to hide configuration in valid C++ attributes.
 - **[palgen](https://github.com/palliate/palgen) / [Docs](https://palgen.palliate.io)**: Command line tool built around a highly modular extension system. This is meant to simplify writing common utility scripts by reducing boilerplate a lot.
