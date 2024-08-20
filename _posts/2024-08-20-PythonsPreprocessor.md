@@ -82,7 +82,7 @@ def decode(data: bytes) -> tuple[str, int]:
         processed = preprocessor(decoded)
     except Exception:
         # print the traceback
-        print(traceback.format_exc())
+        traceback.print_exc()
         raise
     return processed, consumed
 ```
