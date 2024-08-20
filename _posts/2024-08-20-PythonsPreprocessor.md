@@ -1,6 +1,6 @@
 ---
 title: Python's Preprocessor
-date: 2024-06-10T23:36:29+00:00
+date: 2024-08-19T04:20:00+02:00
 categories: [Python]
 tags: [Python, shenanigans, preprocessing, language extensions]
 author: Che
