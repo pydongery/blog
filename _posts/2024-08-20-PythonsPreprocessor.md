@@ -61,7 +61,7 @@ Essentially we need two things to make the Python interpreter happy:
 
 Let's do the decode function first. `codecs.utf_8_decode` can be used for the actual decoding - this will return a tuple of the decoded content of the source file and how many bytes were consumed. The resulting string can be passed on to our actual preprocessor.
 
-> Uncaught exceptions will not be printed with traceback to the termminal as you would expect. Instead the interpreter will simply yield
+> Uncaught exceptions will not be printed with traceback to the terminal as you would expect. Instead the interpreter will simply yield
 > `SyntaxError: encoding problem: your_codec` with no helpful extra information as to why there was a problem with your codec.
 >
 > It is therefore advisable to catch exceptions coming from your preprocessor and explicitly print them before reraising.
