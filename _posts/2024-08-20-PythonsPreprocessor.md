@@ -71,7 +71,6 @@ Let's do the decode function first. `codecs.utf_8_decode` can be used for the ac
 import codecs
 import traceback
 
-
 def preprocessor(data: str) -> str:
     # do actual preprocessing here
     return data
@@ -92,7 +91,6 @@ To get things to work nicely we also need to provide an incremental decoder. Sin
 
 ```py
 import codecs
-
 
 class Decoder(codecs.BufferedIncrementalDecoder):
     def _buffer_decode(self, input, errors, final):  """not used"""
