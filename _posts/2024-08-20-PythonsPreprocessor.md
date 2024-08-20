@@ -451,7 +451,7 @@ Successfully validated.
 <br>
 
 However, for an input file `data_invalid.toml`
-```py
+```toml
 # coding: magic.toml
 name = "John Doe"
 age = 42
