@@ -19,7 +19,7 @@ title: Pydong
 tagline: pydongery and other shenanignas
 
 description: >- # used by seo meta and the atom feed
-  A blog about interesting things you can do in Python, C++ and other languages. #magic___^_^___line
+  A blog about interesting things you can do in Python, C++ and other languages.
 # Fill in the protocol & hostname for your site.
 # e.g. 'https://username.github.io', note that it does not end with a '/'.
 url: "https://pydong.org"
