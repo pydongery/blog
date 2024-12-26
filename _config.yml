@@ -20,25 +20,18 @@ tagline: pydongery and other shenanigans
 
 description: >- # used by seo meta and the atom feed
   A blog about interesting things you can do in Python, C++ and other languages.
-# Fill in the protocol & hostname for your site.
-# e.g. 'https://username.github.io', note that it does not end with a '/'.
 url: "https://pydong.org"
 
 github:
   username: pydongery
 
 social:
-  # Change to your full name.
-  # It will be displayed as the default author of the posts and the copyright owner in the Footer
   name: Che
-  email: contact@pydong.org # change to your email address
+  email: contact@pydong.org
   links:
   # The first element serves as the copyright owner's link
   - https://github.com/pydongery
   - https://github.com/tsche
-  # Uncomment below to add more social links
-  # - https://www.facebook.com/username
-  # - https://www.linkedin.com/in/username
 
 google_site_verification: # fill in to your verification string
 

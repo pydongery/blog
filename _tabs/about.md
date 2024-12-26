@@ -1,7 +1,7 @@
 ---
 # the default layout is 'page'
 icon: fas fa-info-circle
-order: 5
+order: 6
 ---
 
 This blog's main focus is on interesting things you can do in Python, C++ and other languages. You might find posts about other topics if I manage to twist someone's arm hard enough.
