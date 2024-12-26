@@ -112,7 +112,9 @@ This leaves us with three main questions:
 - How do macros interact with the import system?
 
 ### Defining macros
-To make our life a little easier and avoid scoping issues later on, an important first design decision is to only allow macro definitions at module (or file)-scope. Furthermore let's establish that macros can be one of three entities: functions, classes or variables. Macros shall only be valid in the context of the macro preprocessor - they must not be leaked into the final expanded code.
+To make our life a little easier and avoid scoping issues later on, an important first design decision is to only allow macro definitions at module (or file)-scope. Furthermore let's establish that macros can be one of three entities: functions, classes or variables. 
+
+Macros shall only be valid in the context of the macro preprocessor - they must not be leaked into the final expanded code. This implies that compiling a module that uses the `magic.macro` codec would result in the same Python bytecode as manually preprocessing and compiling the result would.
 
 #### `macro` keyword
 Similarly to `async` a keyword could be used to mark a function, class or variable as macro.
@@ -127,7 +129,7 @@ macro async bar(): ...
 
 macro X = "234"
 ```
-This works fairly well to introduce macros and syntax highlighters aren't too unhappy about it.
+This works fairly well to introduce macros and syntax highlighters aren't too unhappy about it. Unfortunately this doesn't help us much to differentiate macro invocations from regular function calls and adds considerable parsing complexity.
 
 #### Bang names
 Another way to differentiate macros from other code is to expect another token after the name which can never appear there in valid Python. A good candidate is `!` - the only time it can ever appear after an identifier is in f-strings (ie `f"{foo!s}`).
@@ -163,8 +165,10 @@ x = 3 + 1728
 assert x == 1731
 ```
 
+While this introduces noise in possibly thrown exceptions, we can use this techique to allow macros to use (soft-)keywords as name. Since there is only 39 keywords including soft keywords at the time of writing, we can get away with doing this only if we have to.
+
 ##### Disambiguation
-Alternatively `!` can be used as disambiguator to force execution in the context of the macro processor. In this case it would be sufficient to simply drop the `!` token rather than mangling the name.
+Alternatively `!` can be used as disambiguator to force execution in the context of the macro processor. In this case it would be sufficient to simply drop the `!` token rather than mangling the name (unless required).
 
 This also means that `!` can be used to invoke a macro regardless of how it was introduced.
 ```py
@@ -225,7 +229,7 @@ def foo(bar):
 
 print(foo(7)) # preprocessed to print(14)
 ```
-Since `foo` is valid in the context of the macro processor, it can be evaluated. Note that all arguments to the `foo` macro must be constants or be visible in the context of the macro processor. 
+Since `foo` is valid in the context of the macro processor, it can be evaluated. Note that all arguments to the `foo` macro must be constants or be visible in the context of the macro processor.
 
 Unfortunately this can easily cause conflicts. In the following example `Optional`, `cache` and `foo` are valid within the macro processor, but are also used in regular code. Even if macros are registered/tagged in some way, `foo(None)` would still be ambiguous. To rectify this issue, usage of the macro disambiguator `!` can be enforced.
 
@@ -249,7 +253,31 @@ bar = foo!(None) # macro invocation, preprocesses to 42
 baz = foo(None) # not a macro invocation, evaluates to 12
 ```
 
+If we require the disambiguator to be used **outside** of macro context, we can lift the requirement of having macro arguments be actual constants. Instead we can pass the actual list of tokens of the macro invocation's argument list to the macro. This allows us to write macros such as `rpn!(+ 3 4)`.
+
+This has the nice side-effect of doubling as a shorthand for `rpn(tokenize("+ 3 4"))` **within** macro context, while not precluding direct invocation of other funtions defined in macro context. 
+
 #### Decorating functions or classes
+To quickly recap: Decorators allow us to wrap functions or classes. Decorator expressions must return a callable, which is invoked when the function is defined. So essentially
+```py
+@some_decorator
+@another_decorator(with_args=True)
+def foo():
+    print("bar")
+```
+is equivalent to writing
+```py
+def foo():
+    print("bar")
+
+foo = some_decorator(another_decorator(with_args=True)(foo))
+```
+If you are interested in the design considerations behind decorators, please refer to [PEP 318](https://peps.python.org/pep-0318/). 
+
+
+Unfortunately this introduces one more indirection. By allowing macros to be used in decorator expressions, we can implement zero-overhead decorators. Since runtime functions/classes do not exist at preprocessing time, we need our macros to receive the function/class's code as list of tokens, AST or source string instead.
+
+This allows us to write code like
 ```py
 @flombigate!
 @bonkle!(123, some_arg=None)
@@ -258,7 +286,11 @@ def foo(x: int):
     print(f"bar {x}")
 ```
 
+[PEP 614](https://peps.python.org/pep-0614/) significantly reduced the restrictions on what can appear in a decorator expression in Python 3.9. To keep things simple we will not attempt to look for macro invocations in more complex decorator expressions.
+
 #### Statement macros
+
+So far we're able to preprocess expressions, functions and classes. To make our macros even more powerful, we could also pass them suites - that is either an indented block of code or a (possibly semicolon-separated collection of) statement(s) followed by a newline.
 ```py
 main!:
     print("foo")
@@ -267,8 +299,7 @@ This raises the question whether sister-macros should be allowed. A sister-macro
 ```py
 try!:
     foo()
-finally!:
-    print("bar")
+finally!: print("bar")
 ```
 
 The `@macro` decorator can be used to not only control the kind of macro, but also express sister-macros. For example:
@@ -281,25 +312,96 @@ def try!(tokens):
 def finally!(tokens):
     yield from tokens
 ```
-Whenever we find a `try!` macro use, we must scan for `finally!` before returning to normal operation. `finally!` is otherwise not considered for macro invocations. By using the bang names in the macro definition, we can effectively use keywords as macro names. This must be special cased in the macro preprocessor implementation, more on that later.
+Whenever we find a `try!` macro use, we must scan for `finally!` before returning to normal operation. `finally!` is otherwise not considered for macro invocations. By using the bang names in the macro definition, we can effectively use keywords as macro names.
+
+Unfortunately this implies additional semantic analysis, which in turn increases the complexity of our preprocessor significantly. [PEP 638](https://peps.python.org/pep-0638/) proposes this, but it is not implemented in the example implementation of the ideas discussed in this blog post.
 
 ### Import behavior
-todo
+To avoid having to rewrite macros in every module, we need some way to interact with the import system. As discussed before, `import!` and `from!` can be used to import entities in the context of the macro preprocessor. This allows us to implement macro logic as regular code and use it as macro later on, for example:
+```py
+from! macro_logic import some_macro
 
-### Summary
+@some_macro!
+def transform_this():
+    print(123)
+```
 
-| Feature                            | `macro` keyword | `bang!` names | `@macro` decorator |
-|------------------------------------|-----------------|---------------|----------------------------|
-| Can introduce function-like macros | ✅               | ✅             | ✅                          |
-| Can introduce object-like macros   | ✅               | ✅             | ❓                          |
-| Can introduce statement macros     | ❌               | ❌             | ✅                          |
-| Can express macro relationships    | ❌               | ❌             | ✅                          |
-| Can disambiguate macro uses        | ❓               | ✅             | ❌                          |
-| Can override keywords              | ❌               | ✅             | ❌                          |
+So far so good. Since we already established that macros only exist in the context of the preprocessor, things get a lot more hairy once we attempt to import actual macros. To get this to work we need to compile and cache the macro code separately from the rest of the module.
 
 
-## Parser basics
-Link Guido PEG
+## Parsing utilities
+Since we introduce new syntax _and_ want macros to be able to operate on raw token streams we need to do a fair bit of parsing. Note that we do not have to actually parse all of Python - we can get away with doing the least amount of work required.
+
+Just like most classic parsers, we first need to tokenize the source code. Fortunately Python's builtin [`tokenize`](https://docs.python.org/3/library/tokenize.html) already provides us with a tokenizer that's sufficient for our purposes. `tokenize.tokenize` is a generator that yields one token at a time. To make our life a little easier we want to be able to peek ahead and roll back to a previous position in the token stream if so desired. Unfortunately neither is directly supported by the `tokenize` API - so let's wrap it.
+
+Similarly to the `Tokenizer` introduced in Guido's excellent series of [PEG parsing posts](https://medium.com/@gvanrossum_83706/peg-parsing-series-de5d41b2ed60) (specifically part 2), we need three functions:
+* `next()` yields the next token and caches it
+* `mark()` returns the current position within the token stream
+* `reset(pos: int)` sets the current position within the token stream to `pos`
+
+While this is already sufficient for generated parsers, it doesn't exactly lead to nice code. To avoid having to remember positions at multiple levels to backtrack to the correct one as soon as an alternative isn't matched, we can instead use context managers. For this to work we need to track the position before the context manager was entered and conditionally reset to it _if_ parsing was unsuccessful, which can be expressed by throwing an exception.
+
+```py
+class Cancellation(Exception):
+    """ This is thrown whenever parsing some alternative was not successful """
+
+class TokenStream(PeekableStream):
+    # assumes `TokenStream._cache` is used to cache already seen items
+    # and `TokenStream.cursor` holds the current location within the token stream
+
+    @property
+    def alt(parent):
+        # pylint: disable=E0213
+        class Guard:
+            def __init__(self, cursor: int):
+                self.cursor = cursor
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc_value, traceback) -> bool:
+                # note that this _must_ be annotated as returning a `bool` to tell
+                # static analyzers that this will **not** swallow all exceptions
+                if exc_type is Cancellation:
+                    parent.reset(self.cursor)
+                    return True
+                return False
+        return Guard(parent.cursor)
+```
+
+Additionally `peek()` to peek the next token without advancing the cursor and multi-token variants `peek_n(amount: int)` and `next(amount: int)` are provided. The implementation can be found in [`util.py`](https://github.com/Tsche/magic_codec/blob/develop/src/magic_codec/util.py).
+
+
+To further simplify the actual parser code, we can implement more helpers such as `consume_line()`, `consume_while(predicate)`, `consume_until(predicate)`. Additionally two more utilities `expect(predicate)` and `maybe(predicate)` can be introduced to reduce the need of having to write code such as
+```py
+if tokens.peek() == some_token:
+  tokens.next() # advance if the expected token was next
+```
+`expect` is only expected to appear within a `TokenStream.alt`, therefore it signifies that an unexpected token was found by throwing a `Cancellation` exception.
+
+Now, we don't actually want to have to write the predicate as a lambda every time. This would result in code looking like
+```py
+with tokens.alt:
+    tokens.maybe(lambda token: token.type == NAME and token.string == "async")
+    tokens.expect(lambda token: token.type == NAME and token.string in ["class", "def"])
+    name = tokens.expect(lambda token: token.type == NAME).string
+    # ...
+```
+
+Instead we could write something along the lines of
+```py
+with tokens.alt:
+    tokens.maybe((NAME, "async"))
+    tokens.expect((NAME, ["class", "def"]))
+    name = tokens.expect((NAME, ...)).string
+    # ...
+```
+
+This is implemented as `TokenQuery` in [`util.py`](https://github.com/Tsche/magic_codec/blob/develop/src/magic_codec/util.py). The rules are fairly straight forward:
+* `TokenQuery(NAME, "async")` exactly matches the token `Token(NAME, "async")`
+* `TokenQuery(NAME, ["class", "def"])` matches `Token(NAME, "class")` and `Token(NAME, "def")`. Similarly `TokenQuery([STRING, NUMBER], "4")` would match both `Token(STRING, "4")` and `Token(NUMBER, "4")`. 
+* `TokenQuery(NAME, ...)` matches any token whose type is `NAME`. Similarly `TokenQuery(..., ...)` would match any token.
+
 
 ## Synthesizing code
 
