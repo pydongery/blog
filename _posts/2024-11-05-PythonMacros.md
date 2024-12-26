@@ -253,9 +253,9 @@ bar = foo!(None) # macro invocation, preprocesses to 42
 baz = foo(None) # not a macro invocation, evaluates to 12
 ```
 
-If we require the disambiguator to be used **outside** of macro context, we can lift the requirement of having macro arguments be actual constants. Instead we can pass the actual list of tokens of the macro invocation's argument list to the macro. This allows us to write macros such as `rpn!(+ 3 4)`.
+If we require the disambiguator to be used **outside** of macro context, we can lift the requirement of having macro arguments be actual constants. Instead we can pass the actual list of tokens of the macro invocation's argument list to the macro. This allows us to write macros such as `rpn!(3 4 +)`.
 
-This has the nice side-effect of doubling as a shorthand for `rpn(tokenize("+ 3 4"))` **within** macro context, while not precluding direct invocation of other funtions defined in macro context. 
+This has the nice side-effect of doubling as a shorthand for `rpn(tokenize("3 4 +"))` **within** macro context, while not precluding direct invocation of other funtions defined in macro context. 
 
 #### Decorating functions or classes
 To quickly recap: Decorators allow us to wrap functions or classes. Decorator expressions must return a callable, which is invoked when the function is defined. So essentially
