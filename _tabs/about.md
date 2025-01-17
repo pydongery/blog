@@ -21,7 +21,7 @@ Some of my recent projects include:
 - **[palgen](https://github.com/palliate/palgen) / [Docs](https://palgen.palliate.io)**: Command line tool built around a highly modular extension system. This is meant to simplify writing common utility scripts by reducing boilerplate a lot.
 - **[cpppp](https://github.com/Tsche/cpppp)**: C++ preprocessor that uses C++ as macro language.
 - **[palliate](https://github.com/palliate) / [palliate.io](https://palliate.io)**: Remote desktop application that allows in-memory streams from virtual machines with dedicated graphics cards. Currently on hold.
-- **[crashbench](https://github.com/Tsche/crashbench)**: Diagnostics/death testing utility. Abandoned and replaced by crashbench.
+- **[diagtest](https://github.com/Tsche/diagtest)**: Diagnostics/death testing utility. Abandoned and replaced by crashbench.
 
 
 Aside from that I do own the [Better C++ Discord community](https://discord.gg/byZvFu7d94). Feel free to join it :)
