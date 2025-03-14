@@ -30,8 +30,9 @@ social:
   email: contact@pydong.org
   links:
   # The first element serves as the copyright owner's link
-  - https://github.com/pydongery
   - https://github.com/tsche
+  - https://github.com/pydongery
+
 
 google_site_verification: # fill in to your verification string
 

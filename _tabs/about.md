@@ -24,4 +24,4 @@ Some of my recent projects include:
 - **[diagtest](https://github.com/Tsche/diagtest)**: Diagnostics/death testing utility. Abandoned and replaced by crashbench.
 
 
-Aside from that I do own the [Better C++ Discord community](https://discord.gg/byZvFu7d94). Feel free to join it :)
+Aside from that I own the [Better C++ Discord community](https://discord.gg/byZvFu7d94). Feel free to join it :)
