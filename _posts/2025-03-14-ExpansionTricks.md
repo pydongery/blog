@@ -5,11 +5,11 @@ categories: [C++,]
 tags: [C++, C++26, reflection, experiments, tricks]
 author: Che
 ---
-[P1306](https://wg21.link/p1306) gives us compile time repetition of a statement _for each_ element of a range (etc.) - what if we instead want the elements as a pack without introducing a new function scope? In this blog post you'll find a few expansion tricks.
+[P1306](https://wg21.link/p1306) gives us compile time repetition of a statement _for each_ element of a range - what if we instead want the elements as a pack without introducing a new function scope? In this blog post you'll find a few expansion tricks.
 
 ## Element-wise expansion
 ### The `expand` Pattern
-The features introduced in [P2996](https://wg21.link/p2996) by themselves are sufficient to expand a range at compile time as a library feature. The paper introduces a helper [`expand`](https://wg21.link/p2996#implementation-status) for this purpose, here's a slightly modified version:
+The reflection features introduced in [P2996](https://wg21.link/p2996) by themselves are sufficient to expand a range at compile time as a library feature. The paper introduces a helper [`expand`](https://wg21.link/p2996#implementation-status) for this purpose, here's a slightly modified version:
 
 ```c++
 template <auto... Elts>
@@ -198,6 +198,8 @@ struct Test {
 
 int main() { 
     std::print("{}", get_p(Test{42, 'y'}));
+    // prints:
+    // y
 }
 ```
 [Run on Compiler Explorer](https://godbolt.org/z/v4TjxaqbW)
@@ -378,7 +380,7 @@ While all of the aforementioned examples make use of reflection features, genera
 
 By far the most common range to expand into a constant template parameter pack is a sequence of integers. In fact, this is common enough for C++14 to have introduced `std::integer_sequence`, `std::index_sequence` and `std::make_index_sequence` for this very purpose.
 
-In a lot of code we see IILE being used to retrieve the pack. The following pattern is rather popular:
+In a lot of code we see IILEs being used to retrieve the pack. The following pattern is rather popular:
 ```c++
 []<std::size_t... Idx>(std::index_sequence<Idx...>){
     // ...
