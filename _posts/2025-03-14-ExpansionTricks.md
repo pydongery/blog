@@ -5,7 +5,8 @@ categories: [C++,]
 tags: [C++, C++26, reflection, experiments, tricks]
 author: Che
 ---
-[P1306](https://wg21.link/p1306) gives us compile time repetition of a statement _for each_ element of a range - what if we instead want the elements as a pack without introducing a new function scope? In this blog post you'll find a few expansion tricks.
+[P1306](https://wg21.link/p1306) gives us compile time repetition of a statement _for each_ element of a range - what if we instead want the elements as a pack without introducing a new function scope? In this blog post we'll look at the `expand` helper, expansion statements and how arbitrary ranges can be made decomposable via structured bindings to reduce the need for IILEs.
+
 
 ## Element-wise expansion
 ### The `expand` Pattern
@@ -140,7 +141,11 @@ constexpr auto operator>>(F fnc) const {
 }
 ```
 
-Returning a value is a little more involved. Let's first assume that the return types of all `F::operator()` specializations are either `void` or any copy constructible type. To delay initialization (and therefore avoid a default-constructibility requirement) the return object can be wrapped in a union.
+Returning a value is a little more involved.
+
+We already know that sooner or later a `F::operator()` specialization will return something other than a `void`. To avoid a default-constructibility requirement on the return type, the return object can be wrapped in a union. Note however that this will imply that the return type must be copy-constructible. 
+
+This issue can also be worked around, but the primary point here is to see just how much code is required to _roughly_ emulate expansion statements.
 
 ```c++
 template <typename F>
@@ -269,6 +274,24 @@ int main() {
     // 42 y
 }
 ```
+>**Operator choice**
+>
+>Note that the choice of operator `->*` is mostly arbitrary. It just happens to be a rarely used operator that looks different enough to `>>` to not confuse the two.
+>
+>You might as well use regular member function templates instead of user-defined operator templates to achieve the following syntax:
+>```cpp
+>[:expand(some-range):].elements([]<auto Elt>{
+>    // ...
+>});
+>```
+> and respectively
+>```cpp
+>[:expand(some-range):].into([]<auto... Elts>{
+>    // ...
+>});
+>```
+>
+{: .prompt-info }
 
 ### Structured bindings
 Unfortunately this suffers from the same problem as before - we are introducing another function scope.
