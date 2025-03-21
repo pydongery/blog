@@ -5,12 +5,14 @@ categories: [C++,]
 tags: [C++, C++26, reflection, experiments, tricks]
 author: Che
 ---
-[P1306](https://wg21.link/p1306) gives us compile time repetition of a statement _for each_ element of a range - what if we instead want the elements as a pack without introducing a new function scope? In this blog post we'll look at the `expand` helper, expansion statements and how arbitrary ranges can be made decomposable via structured bindings to reduce the need for IILEs.
+[P1306](https://wg21.link/p1306) gives us compile time repetition of a statement _for each_ element of a range - what if we instead want the elements as a pack without introducing a new function scope?
+
+In this blog post we'll look at the `expand` helper, expansion statements and how arbitrary ranges can be made decomposable via structured bindings to reduce the need for IILEs.
 
 
 ## Element-wise expansion
-### The `expand` Pattern
-The reflection features introduced in [P2996](https://wg21.link/p2996) by themselves are sufficient to expand a range at compile time as a library feature. The paper introduces a helper [`expand`](https://wg21.link/p2996#implementation-status) for this purpose, here's a slightly modified version:
+### The `expand` pattern
+The reflection features introduced in [P2996](https://wg21.link/p2996) by themselves are sufficient to iterate over a compile time range. The paper introduces a helper [`expand`](https://wg21.link/p2996#implementation-status) for this purpose, here's a slightly modified version:
 
 ```c++
 template <auto... Elts>
@@ -26,7 +28,7 @@ constexpr inline Replicator<Elts...> replicator{};
 
 template <std::ranges::range R>
 consteval auto expand(R const& range) {
-    std::vector<std::meta::info> args;
+    std::vector<std::meta::info> args{};
     for (auto item : range) {
         args.push_back(std::meta::reflect_value(item));
     }
@@ -34,13 +36,13 @@ consteval auto expand(R const& range) {
 }
 ```
 
-This allows us to write code along the lines of
+This allows us to write the following code. Note that `Member` needs to be a constant to be usable in a splice.
 ```c++
 template <typename T>
 void print_members(T const& obj) {
     [:expand(nonstatic_data_members_of(^^T)):]
-    >> [&]<auto member>{
-        std::println("{}: {}", identifier_of(member), obj.[:member:]);
+    >> [&]<auto Member>{
+        std::println("{}: {}", identifier_of(Member), obj.[:Member:]);
     };
 }
 
@@ -78,11 +80,11 @@ To reuse the example from before, we can now let it stop as soon as some arbitra
 template <typename T>
 void print_members(T const& obj) {
     [:expand(nonstatic_data_members_of(^^T)):]
-    >> [&]<auto member>{
-        std::println("{}: {}", identifier_of(member), obj.[:member:]);
+    >> [&]<auto Member>{
+        std::println("{}: {}", identifier_of(Member), obj.[:Member:]);
 
         // stop when we've reached a member named "x"
-        return identifier_of(member) == "x";
+        return identifier_of(Member) == "x";
     };
 }
 
@@ -167,7 +169,7 @@ constexpr auto operator>>(F fnc) const {
     }
 }
 ```
-To keep using the short-circuiting property of `&&`, another helper `invoke` must be introduced. If the requested `F::operator()` specialization returned void, `invoke` shall return `true`. Otherwise it must return `false` and copy construct `ret.obj` from the return value.
+To keep using the short-circuiting property of `&&`, another helper `invoke` must be introduced. If the requested `F::operator()` specialization returned `void`, `invoke` shall return `true`. Otherwise it must return `false` to stop iteration and finally copy construct `ret.obj` from the return value.
 
 ```c++
 template <auto E, typename F, typename R>
@@ -189,9 +191,9 @@ Finally we can write the following code.
 template <typename T>
 auto get_p(T const& obj) {
     return [:expand(nonstatic_data_members_of(^^T)):]
-    >> [&]<auto member>{
-        if constexpr (identifier_of(member) == "p") {
-            return obj.[:member:];
+    >> [&]<auto Member>{
+        if constexpr (identifier_of(Member) == "p") {
+            return obj.[:Member:];
         }
   };
 }
@@ -217,11 +219,11 @@ Unfortunately using `expand` implies having to use a lambda expression and there
 
 [P1306](https://wg21.link/P1306) `template for` expansion statements allow us to avoid the extra function scope.
 ```diff
--[:expand(some_range):] >> []<auto elt>{
+-[:expand(some_range):] >> []<auto Elt>{
 -    // ...
 -};
 
-+template for (constexpr auto elt : define_static_array(some_range)) {
++template for (constexpr auto Elt : define_static_array(some_range)) {
 +    // ...
 +}
 ```
@@ -274,13 +276,15 @@ int main() {
     // 42 y
 }
 ```
+[Run on Compiler Explorer](https://godbolt.org/z/66GfsYzTW)
+
 >**Operator choice**
 >
 >Note that the choice of operator `->*` is mostly arbitrary. It just happens to be a rarely used operator that looks different enough to `>>` to not confuse the two.
 >
 >You might as well use regular member function templates instead of user-defined operator templates to achieve the following syntax:
 >```cpp
->[:expand(some-range):].elements([]<auto Elt>{
+>[:expand(some-range):].for_each([]<auto Elt>{
 >    // ...
 >});
 >```
@@ -303,7 +307,7 @@ To get around that, it's possible to use a structured binding to introduce a pac
 The simplest way to make an arbitrary range decomposable is to `promote` it to a constexpr C-style array. Unfortunately `define_static_array` from [P3491](https://wg21.link/P3491) gives us a constexpr `span`, not the actual array. The underlying machinery is extremely simple though:
 ```c++
 template <typename T, T... Vs>
-constexpr inline T fixed_array[]{Vs...};
+constexpr inline T fixed_array[sizeof...(Vs)]{Vs...};
 
 template <std::ranges::input_range R>
 consteval auto promote(R&& iterable) {
@@ -391,11 +395,25 @@ struct std::tuple_element<Idx, Replicator<Elts...>> {
 
 Now that `Replicator` is decomposable, we can finally get rid of the lambda expression.
 ```diff
--[:expand(some_range):] >> []<auto... elts>{
+-[:expand(some_range):] >> []<auto... Elts>{
 -    // ...
 -};
-+constexpr auto [...elts] = [:expand(some_range):];
++constexpr auto [...Elts] = [:expand(some_range):];
 ```
+[Run on Compiler Explorer](https://godbolt.org/z/o86sTYdxq). At the time of writing `constexpr` structured bindings ([P2686](https://wg21.link/p2686)) are not yet implemented in clang, which is why the example does not make use of it.
+
+
+On a side note, this also means `expand` is usable in expansion statements and can be used to replace `define_static_array`.
+```diff
+-template for (constexpr auto Elt : define_static_array(some_range)) {
+-    // ...
+-}
+
++template for (constexpr auto Elt : [:expand(some_range):]) {
++    // ...
++}
+```
+
 
 
 ## Sequences
