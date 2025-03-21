@@ -1,6 +1,6 @@
 ---
 title: C++26 Expansion Tricks
-date: 2025-03-14T04:20:29+01:00
+date: 2025-03-21T14:20:29+01:00
 categories: [C++,]
 tags: [C++, C++26, reflection, experiments, tricks]
 author: Che
@@ -83,8 +83,8 @@ void print_members(T const& obj) {
     >> [&]<auto Member>{
         std::println("{}: {}", identifier_of(Member), obj.[:Member:]);
 
-        // stop when we've reached a member named "x"
-        return identifier_of(Member) == "x";
+        // stop after we've reached a member named "p"
+        return identifier_of(Member) == "p";
     };
 }
 
@@ -99,7 +99,7 @@ int main() {
     // x: 42
 }
 ```
-[Run on Compiler Explorer](https://godbolt.org/z/G64M7KGY7)
+[Run on Compiler Explorer](https://godbolt.org/z/11bs1bed1)
 
 ### Returning values
 
@@ -145,7 +145,7 @@ constexpr auto operator>>(F fnc) const {
 
 Returning a value is a little more involved.
 
-We already know that sooner or later a `F::operator()` specialization will return something other than a `void`. To avoid a default-constructibility requirement on the return type, the return object can be wrapped in a union. Note however that this will imply that the return type must be copy-constructible. 
+We already know that sooner or later a `F::operator()` specialization will return something other than a `void`, so we can prepare an object of this type to be returned later. To avoid a default-constructibility requirement on the return type, the return object can be wrapped in a union. Note however that this will imply that the return type must be copy-constructible. 
 
 This issue can also be worked around, but the primary point here is to see just how much code is required to _roughly_ emulate expansion statements.
 
