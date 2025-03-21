@@ -2,7 +2,7 @@
 title: C++26 Expansion Tricks
 date: 2025-03-21T14:20:29+01:00
 categories: [C++,]
-tags: [C++, C++26, reflection, experiments, tricks]
+tags: [C++, C++26, reflection, tricks, TMP, metaprogramming]
 author: Che
 ---
 [P1306](https://wg21.link/p1306) gives us compile time repetition of a statement _for each_ element of a range - what if we instead want the elements as a pack without introducing a new function scope?
