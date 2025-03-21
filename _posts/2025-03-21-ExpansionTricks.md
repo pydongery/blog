@@ -18,7 +18,7 @@ The reflection features introduced in [P2996](https://wg21.link/p2996) by themse
 template <auto... Elts>
 struct Replicator {
     template <typename F>
-    constexpr decltype(auto) operator>>(F fnc) const {
+    constexpr void operator>>(F fnc) const {
         (fnc.template operator()<Elts>(), ...);
     }
 };
@@ -27,7 +27,7 @@ template <auto... Elts>
 constexpr inline Replicator<Elts...> replicator{};
 
 template <std::ranges::range R>
-consteval auto expand(R const& range) {
+consteval std::meta::info expand(R const& range) {
     std::vector<std::meta::info> args{};
     for (auto item : range) {
         args.push_back(std::meta::reflect_value(item));
@@ -69,7 +69,7 @@ First, let's introduce a way to stop iteration at any point. The short-circuitin
 template <auto... Elts>
 struct Replicator {
     template <typename F>
-    constexpr decltype(auto) operator>>(F fnc) const {
+    constexpr void operator>>(F fnc) const {
         (fnc.template operator()<Elts>() && ...);
     }
 };
@@ -240,7 +240,7 @@ To do this, let's introduce `operator->*` for `Replicator`. Unlike `operator>>` 
 template <auto... Elts>
 struct Replicator {
     template <typename F>
-    constexpr decltype(auto) operator>>(F fnc) const {
+    constexpr void operator>>(F fnc) const {
         (fnc.template operator()<Elts>(), ...);
     }
 
@@ -310,7 +310,7 @@ template <typename T, T... Vs>
 constexpr inline T fixed_array[sizeof...(Vs)]{Vs...};
 
 template <std::ranges::input_range R>
-consteval auto promote(R&& iterable) {
+consteval std::meta::info promote(R&& iterable) {
     std::vector args = {^^std::ranges::range_value_t<R>};
     for (auto element : iterable) {
         args.push_back(std::meta::reflect_value(element));
@@ -430,7 +430,7 @@ In a lot of code we see IILEs being used to retrieve the pack. The following pat
 
 Since we already have the ability to expand arbitrary ranges through the `expand` helper, we can simply make use of C++20's `std::ranges::iota_view` to generate the sequence.
 ```c++
-consteval auto sequence(unsigned maximum) {
+consteval std::meta::info sequence(unsigned maximum) {
     return expand(std::ranges::iota_view{0U, maximum});
 }
 ```
