@@ -1,8 +1,8 @@
 ---
 title: Variadic Switch
-date: 2025-05-01T00:36:29+00:00
+date: 2025-05-09T04:20:00+00:00
 categories: [C++]
-tags: [C++, Metaprogramming]
+tags: [C++, Metaprogramming, C++26]
 author: Che
 bokeh: true
 ---
