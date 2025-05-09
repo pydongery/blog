@@ -6,12 +6,12 @@ tags: [C++, Metaprogramming]
 author: Che
 bokeh: true
 ---
-Way back in 2017 I found an interesting question on [Reddit](https://www.reddit.com/r/cpp/comments/6vyqra/variadic_switch_case/). Essentially the author asks why there is no way to expand a pack into a sequence of case labels followed by a statement. It was illustrated with the following imaginary syntax:
+Several years back I found an interesting question on [Reddit](https://www.reddit.com/r/cpp/comments/6vyqra/variadic_switch_case/). Essentially the author asks why there is no way to expand a pack into a sequence of case labels followed by a statement. It was illustrated with the following imaginary syntax:
 ```c++
 template <class Visitor, class Variant, std::size_t ... Is>
 auto visit_impl(Visitor visitor, Variant && variant, std::index_sequence<Is...>) {
     auto i = variant.index();
-    switch (i) { (case Is: return visitor(std::get<Is>(variant));)... }
+    switch (i) { (case Is: return visitor(get<Is>(variant));)... }
 }
 
 template <class Visitor, class Variant>
@@ -27,11 +27,11 @@ And perhaps even more interestingly: Can C++26 features help with this?
 
 ## Jump Tables
 
-Some programming languages provide a direct or indirect way of generating what's called a jump table or [branch table](https://en.wikipedia.org/wiki/Branch_table). While C++'s `switch` statements do not require compilers to turn them into jump tables, most compilers will do so if the number of cases is large enough and optimization is enabled.
+Some programming languages provide a direct or indirect way of generating what's called a jump table or [branch table](https://en.wikipedia.org/wiki/Branch_table). While C++'s `switch` statements are not required to be turned into jump tables by the compiler, most compilers will do so if the number of cases is large enough and optimization is enabled.
 
 
 >For simplicity let's not care about a generic visitor just yet, let's instead always call an undefined template function `h`:
->```cpp
+>```c++
 >template <int>
 >int h();
 >```
@@ -40,7 +40,7 @@ Some programming languages provide a direct or indirect way of generating what's
 {: .prompt-info }
 
 Consider a simple switch such as:
-```cpp
+```c++
 int mersenne(unsigned index){
   switch (index) {
     case 0: return h<2>();
@@ -82,7 +82,7 @@ mersenne(unsigned int):
 ```
 
 While it won't help with solving the stated problem, we can approximately work backwards from the generated assembly by using GCC's [computed goto](https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html) extension.
-```cpp
+```c++
 template <auto> int h();
 
 int mersenne(unsigned index){
@@ -123,7 +123,7 @@ This leads us to the first naive implementation strategy.
 To turn this back into valid C++, we need to create an array of function pointers instead of label addresses. Conveniently, grabbing a pointer to every specialization of `h` that we wish to handle is trivial.
 
 This gets us what's called a [dispatch table](https://en.wikipedia.org/wiki/Dispatch_table). Our example from before can be rewritten as follows.
-```cpp
+```c++
 int mersenne(unsigned index){
   using F = int();
   constexpr static F* table[] = { 
@@ -143,7 +143,7 @@ int mersenne(unsigned index){
 }
 ```
 More generically, we can expand packs to generate the table.
-```cpp
+```c++
 template <int... Is>
 int visit(unsigned index) {
   using F = int();
@@ -162,7 +162,9 @@ Note that while this still produces good assembly for this trivial example, this
 
 ### Generic visit
 However, this can already be used to implement single-variant `visit`. Since `visit` is a great usage example, we will look at a simplified implementation for each strategy.
->In the `visit` example implementations for all strategies, `get` is used for clarity. However, in the compiler explorer examples you will see `__unchecked_get` instead, which (for libc++) is essentially the same as `get` minus boundary checks.
+>In the `visit` example implementations for all strategies, `get` is used for clarity. 
+>
+>However, in the linked CE examples you will see `__unchecked_get` instead, which (for libc++) is essentially the same as `get` minus boundary checks.
 >
 >This is mostly done to make the emitted assembly easier to read.
 {: .prompt-info }
@@ -174,7 +176,7 @@ decltype(auto) visit(F&& visitor, V&& variant) {
   constexpr static auto table = []<std::size_t... Idx>(std::index_sequence<Idx...>) {
     return std::array{+[](F&& visitor, V&& variant) {
       return std::invoke(std::forward<F>(visitor), 
-                         __unchecked_get<Idx>(std::forward<V>(variant)));
+                         get<Idx>(std::forward<V>(variant)));
     }...};
   }(std::make_index_sequence<max_index>());
 
@@ -288,7 +290,7 @@ template <int Offset, int Limit>
 }
 ```
 
-While the `inline` keyword's more interesting use is to collapse multiple functions or variables of multiple translation units into one entity with one address ([dcl.inline/6](https://standards.pydong.org/c++/dcl.inline#6)) and therefore sidestep what would otherwise be ODR violations ([basic.def.odr](https://standards.pydong.org/c++/basic.def.odr)), some compilers actually honor `inline` as an ignorable optimization hint ([dcl.inline/2](https://standards.pydong.org/c++/dcl.inline#2)). For example Clang raises the inlining threshold slightly.
+While the `inline` keyword's more interesting use is to collapse multiple definitions of functions or variables in different translation units into one entity with one address ([dcl.inline/6](https://standards.pydong.org/c++/dcl.inline#6)) and therefore sidestep what would otherwise be ODR violations, some compilers actually honor `inline` as an ignorable optimization hint ([dcl.inline/2](https://standards.pydong.org/c++/dcl.inline#2)). For example Clang raises the inlining threshold slightly.
 
 Unfortunately it is not possible to force inlining in a portable way. However, most compilers have special keywords or attributes for this very purpose.
 
@@ -312,7 +314,7 @@ entry:
 }
 ```
 However if we look at the generated assembly, we will notice the lack of a jump table:
-```cpp
+```c++
 int visit<0ul, 3ul>(unsigned long):
         cmp     rdi, 2
         je      int h<2ul>()
@@ -338,14 +340,14 @@ define weak_odr dso_local noundef i32 @_Z5visitILm0ELm4EEim(i64 noundef %index) 
 }
 ```
 This time we can see this lovely note in the result of the X86 DAG->DAG Instruction Selection pass:
-```cpp
+```c++
 # Machine code for function 
 # int visit<0ul, 4ul>(unsigned long): IsSSA, TracksLiveness
 Jump Tables:
 %jump-table.0: %bb.1 %bb.2 %bb.3 %bb.5
 ```
 Yay, a jump table! Let's verify the generated assembly
-```cpp
+```c++
 int visit<0ul, 4ul>(unsigned long): 
         lea     rax, [rip + .LJTI0_0]
         movsxd  rcx, dword ptr [rax + 4*rdi]
@@ -394,7 +396,7 @@ int visit(unsigned index) {
 ```
 
 Assuming `Is` is the index sequence [0, 5] this expands to the following code ([cppinsights](https://cppinsights.io/s/4207098f)):
-```cpp
+```c++
 template<>
 int visit<0, 1, 2, 3, 4, 5>(unsigned index) {
   int retval;
@@ -409,7 +411,7 @@ int visit<0, 1, 2, 3, 4, 5>(unsigned index) {
 ```
 
 We can rewrite this to be a little easier to read:
-```cpp
+```c++
 int visit(unsigned index) {
   int retval;
   if (index == 0) { // case 0
@@ -464,9 +466,9 @@ Let's look at the first two "cases" just before GCC's `iftoswitch` optimization 
 //    pred:       4 (TRUE_VALUE,EXECUTABLE)
   retval = h<1>();
 ```
-So unfortunately GCC cannot assume that only one of the "case" branches will be taken at this point and decides against turning this into a switch. Let's help GCC out and turn this into
+So unfortunately GCC did not infer that only one of the "case" branches will be taken at this point and decides against turning it into a switch. Let's help GCC out and turn this into
 
-```cpp
+```c++
 int visit(unsigned index) {
   int retval;
   if (index == 0) {      // case 0
@@ -493,7 +495,11 @@ int visit(unsigned index) {
 instead. We can [manually confirm](https://gcc.godbolt.org/z/G3YhP4Pq8) that this works. Great - so how do we do this generically?
 
 ### Short-circuiting folds
-We already had a pack of indices before, so let's use a fold expression again. What we're looking for is an operator capable of [short circuiting](https://en.wikipedia.org/wiki/Short-circuit_evaluation). C++ has two such operators - logical AND (`&&`) [expr.log.and/1](https://standards.pydong.org/c++/expr.log.and#1) and logical OR (`||`) [expr.log.or/1](https://standards.pydong.org/c++/expr.log.or#1). So let's fold over `||` instead.
+We already had a pack of indices before, so let's use a fold expression again. What we're looking for is an operator capable of [short circuiting](https://en.wikipedia.org/wiki/Short-circuit_evaluation). 
+
+C++ has two such operators - logical `and` ([expr.log.and/1](https://standards.pydong.org/c++/expr.log.and#1)) and logical `or` ([expr.log.or/1](https://standards.pydong.org/c++/expr.log.or#1)). 
+
+So let's fold over `or` instead.
 
 ```c++
 template <int... Is>
@@ -505,7 +511,7 @@ int visit(unsigned index) {
 ```
 
 According to [cppinsights](https://cppinsights.io/s/827e0ae9) this desugars to:
-```cpp
+```c++
 template<>
 int visit<0, 1, 2, 3, 4, 5>(unsigned index)
 {
@@ -525,20 +531,101 @@ As [Compiler Explorer](https://gcc.godbolt.org/z/jGsxKPcxz) can confirm for us: 
 ### Generic visit
 Unfortunately making this generic is a little more difficult. 
 
-First of all let's make sure we do not introduce a default-constructibility requirement on the return type of the visitor. The idiomatic way to do so is by wrapping it in a `std::optional`. However, the fold expression already tells us whether a visitor was found (and therefore if the `optional` is engaged), we don't really need `optional` to begin with.
+Since we need to prepare a variable of the visitor's return type, we need to find the visitor's return type. Fortunately visitors for all alternatives are required to have the same return type, so we can simply check for the first alternative.
 
 ```c++
-template <int... Is>
-int visit(unsigned index) {
-  union {
-    int value;
-  };
-  if (((index == Is ? std::construct_at(&value, h<Is>()), true : false) || ...)) {
-    return value;
-  }
-  std::unreachable(); // no visitor found
+template <typename F, typename V>
+using visit_result_t = std::invoke_result_t<F, std::variant_alternative_t<0, 
+                                                  std::remove_reference_t<V>>>;
+```
+
+With this we can set up `visit`.
+```c++
+template<typename F, typename V>
+constexpr decltype(auto) visit(F&& visitor, V&& variant){
+  using return_type = visit_result_t<F, V>;
+  constexpr auto size = std::variant_size_v<std::remove_cvref_t<V>>;
+  return visit_impl<return_type>(std::make_index_sequence<size>(), 
+                                 std::forward<F>(visitor), 
+                                 std::forward<V>(variant));
 }
 ```
+
+#### Visitors returning `void`
+Since we cannot have variables of type `void`, we need to special case for visitors that return `void`. This is rather easy.
+
+```c++
+template <typename R, typename F, typename V, std::size_t... Idx>
+  requires (std::same_as<R, void>)
+constexpr decltype(auto) visit_impl(std::index_sequence<Idx...>, F&& fnc, V&& variant) {
+    auto index = variant.index();
+    if(((index == Idx ? std::forward<F>(fnc)(get<Idx>(std::forward<V>(variant))), true 
+                      : false) || ...)){
+      // visitor found
+      return;
+    }
+
+    // no visitor found
+    std::unreachable();
+}
+```
+
+#### Default-constructibility
+Next, let's make sure we do not introduce a default-constructibility requirement on the return type of the visitor. The idiomatic way to do so is by wrapping it in a `std::optional`. 
+
+However, the fold expression already tells us whether a visitor was found (and therefore if the `optional` is engaged), we don't really need `optional` to begin with.
+
+```c++
+template <typename R, typename F, typename V, std::size_t... Idx>
+constexpr decltype(auto) visit_impl(std::index_sequence<Idx...>, F&& fnc, V&& variant) {
+  auto index = variant.index();
+  union Container {
+    ~Container(){}
+
+    char dummy;
+    R value;
+  } ret{};
+
+  if(((index == Idx ? std::construct_at(&ret.value, 
+                          std::forward<F>(fnc)(get<Idx>(std::forward<V>(variant)))), true 
+                    : false) || ...)){
+    // found a visitor -> value is the active member
+    return ret.value;
+  }
+
+  // no visitor found
+  std::unreachable();
+}
+```
+
+#### Move-only return types
+Finally, we need to make sure this still works if the visitor returned an object of move-only type. This is a little more tricky. 
+
+Instead of preparing a variable of appropriate type, we can instead create functions that do the visitor call for us and finally call the selected one.
+```c++
+template <typename R, typename F, typename V, std::size_t... Idx>
+  requires (!std::same_as<R, void> && !std::is_copy_constructible_v<R>)
+constexpr decltype(auto) visit_impl(std::index_sequence<Idx...>, F&& fnc, V&& variant) {
+  auto const index = variant.index();
+  R (*fptr)(F&&, V&&) = nullptr;
+  
+  if(((Idx == index ? (fptr = +[](F&& fnc, V&& variant) -> R {
+                        return std::forward<F>(fnc)(get<Idx>(std::forward<V>(variant)));
+                      }, true) 
+                    : false) || ...)) {
+    // visitor found
+    return fptr(std::forward<F>(fnc), 
+              std::forward<V>(variant));
+  }
+  
+  // no visitor found
+  std::unreachable();
+}
+```
+
+Unfortunately this quickly degrades to a call instead of a jump. Due to the rarity of move-only types this might however be acceptable.
+
+Run the full example on [Compiler Explorer](https://godbolt.org/z/be46PoqsG).
 
 ## Expansion statements
 So, can we do any better in C++26? Are there any C++26 features that could help with this?
@@ -560,9 +647,17 @@ int visit(int x) {
 ```
 While this compiles with the clang-p2996 fork at the time of writing, this is unfortunately **not intended to work**. 
 
-> 2. The contained statement of an _expansion-statement_ is a _control-flow-limited statement_ ([[stmt.label]](https://standards.pydong.org/c++/stmt.label#3)).
-
-[stmt.expand]/2 from [P1306](https://wg21.link/p1306r3) (Thanks to Dan Katz for clarifying this!)
+>To explain why, we need to dig into the proposal a little (Thanks to Dan Katz for clarifying this!). 
+>
+>[stmt.expand]/2 from [P1306](https://wg21.link/p1306r3) states (emphasis mine)
+>> The **contained statement** of an _expansion-statement_ is a _control-flow-limited statement_ ([[stmt.label]](https://standards.pydong.org/c++/stmt.label#3)).
+>
+>[[stmt.label]/3.1](https://standards.pydong.org/c++/stmt.label#3.1) applies to our example:
+>> a `case` or `default` label appearing within `S` shall be associated with a `switch` statement ([stmt.switch](https://standards.pydong.org/c++/stmt.switch)) **within `S`**
+>
+>Unfortunately the `switch` statement in our example is _outside_ of the contained statement `S` of the expansion statement. We are therefore not allowed to do this.
+>
+{: .prompt-tip }
 
 ### Optimizer to the rescue
 
@@ -581,7 +676,7 @@ int visit(int x) {
     return -1;
 }
 ```
-We can manually verify with [Compiler Explorer](tbd) that this optimizes as intended.
+We can manually verify with [Compiler Explorer](tbd) that Clang optimizes this as intended.
 
 > At the time of writing "Opt Viewer" for clang-p2996 is broken due to a missing Compiler Explorer-specific patch.
 >
@@ -597,7 +692,7 @@ We can manually verify with [Compiler Explorer](tbd) that this optimizes as inte
 >    return -1;
 >}
 >```
->[View on Compiler Explorer](tbd)
+>[View on Compiler Explorer](https://godbolt.org/z/j37MKPnKh)
 >
 {: .prompt-info }
 
@@ -607,35 +702,23 @@ Implementing a generic single-variant `visit` is now rather trivial:
 
 ```c++
 template <typename F, typename V>
-decltype(auto) visit(F&& fnc, V&& variant) {
+constexpr decltype(auto) visit(F&& fnc, V&& variant) {
   static constexpr std::size_t size = std::variant_size_v<std::remove_cvref_t<V>>;
   auto const index = variant.index();
-  if (index == std::variant_npos) {
-    // TODO error handling
-    std::unreachable();
-  }
-
-  template for (constexpr auto I : std::views::iota{0uz, size}) {
-    if (index == I) {
+  template for (constexpr auto Idx : std::views::iota{0uz, size}) {
+    if (index == Idx) {
       return std::invoke(std::forward<F>(fnc),
-                         get<I>(std::forward<V>(variant)));
+                         get<Idx>(std::forward<V>(variant)));
     }
   }
+
+  // replace with proper error handling
   std::unreachable();
 }
 ```
-[Run on Compiler Explorer](https://godbolt.org/z/GTTGrTb4M)
+[Run on Compiler Explorer](https://godbolt.org/z/jh164cEM4)
 
->If [P1789](https://wg21.link/p1789) gets accepted, we can write this in an even nicer way:
->```diff
->  template for (constexpr auto I :
->-                std::views::iota{0uz, size}) {
->+                std::make_index_sequence<size>()) {
->    if (index == I) {
->      return std::invoke(std::forward<F>(fnc),
->                         get<I>(std::forward<V>(variant)));
->    }
->  }
->```
+
+>For a real world example check out [rsl/variant](https://github.com/Tsche/rsl/blob/master/include/rsl/variant).
 >
 {: .prompt-tip }
