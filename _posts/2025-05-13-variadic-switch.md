@@ -630,9 +630,6 @@ constexpr auto visit_impl(std::index_sequence<Idx...>, F&& fnc, V&& variant) {
 }
 ```
 
-> Note that this still does not support copy-only return types.
-{: .prompt-info }
-
 Run the full example on [Compiler Explorer](https://godbolt.org/z/4ozq6GWWs).
 
 ## Expansion statements
