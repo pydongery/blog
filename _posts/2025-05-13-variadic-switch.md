@@ -1,6 +1,6 @@
 ---
 title: Variadic Switch
-date: 2025-05-09T04:20:00+00:00
+date: 2025-05-13T02:20:00+00:00
 categories: [C++]
 tags: [C++, Metaprogramming, C++26]
 author: Che
@@ -156,7 +156,7 @@ int visit(unsigned index) {
   return table[index]();
 }
 ```
-[Run on Compiler Explorer](https://godbolt.org/z/MP1xYcsjh)
+[Run on Compiler Explorer](https://godbolt.org/z/TWhWPEorv)
 
 Note that while this still produces good assembly for this trivial example, this quickly degenerates and emits a call instead of a jump.
 
@@ -191,7 +191,7 @@ decltype(auto) visit(F&& visitor, V&& variant) {
 [Run on Compiler Explorer](https://godbolt.org/z/77TWhc6ce)
 
 ## Macros
-Surely the closest thing to a switch is.. a switch. Trusty old macros might not spark joy, but by cleverly combining them with C++ features we can try something else: Generating a lot of cases and then discarding all whose whose index exceeds the amount of cases we want to handle.
+Surely the closest thing to a switch is.. a switch. Trusty old macros might not spark joy, but by cleverly combining them with C++ features we can try something else: Generating a lot of cases and then discarding all those whose index exceeds the amount of cases we want to handle.
 
 To do this we first need some way to emit cases with an increasing index. A set of macros like the following can help:
 ```c++
@@ -233,7 +233,7 @@ With the `STAMP` macro in place, we can now define a macro to generate a `case`.
     std::unreachable();
 ```
 
-To reduce the amount of branches that need to be discarded as much as possible, we can generate multiple template classes that handle variants up to a specific size limit. The appropriately sized one can later be selected and instantiated in `visit`.
+To reduce the amount of branches that need to be discarded as much as possible, we can generate multiple explicit specializations of a class template that handle variants up to a specific size limit each.
 ```c++ 
 #define GENERATE_STRATEGY(Idx, Stamper)                                 \
   template <>                                                           \
@@ -292,13 +292,13 @@ template <int Offset, int Limit>
 
 While the `inline` keyword's more interesting use is to collapse multiple definitions of functions or variables in different translation units into one entity with one address ([dcl.inline/6](https://standards.pydong.org/c++/dcl.inline#6)) and therefore sidestep what would otherwise be ODR violations, some compilers actually honor `inline` as an ignorable optimization hint ([dcl.inline/2](https://standards.pydong.org/c++/dcl.inline#2)). For example Clang raises the inlining threshold slightly.
 
-Unfortunately it is not possible to force inlining in a portable way. However, most compilers have special keywords or attributes for this very purpose.
+Unfortunately it is not possible to force inlining in a portable way. However, most compilers have special attributes for this very purpose.
 
-| Compiler | Keyword | Attribute |
+| Compiler | Attribute |
 |---|---|---|
-| GCC |  | `[[gnu::always_inline]]` |
-| Clang | `__forceinline` | `[[clang::always_inline]]` or `[[gnu::always_inline]]` |
-| MSVC | `__forceinline` | `[[msvc::forceinline]]` |
+| GCC | `[[gnu::always_inline]]` |
+| Clang | `[[clang::always_inline]]` or `[[gnu::always_inline]]` |
+| MSVC | `[[msvc::forceinline]]` |
 
 We can use [Compiler Explorer's clang Opt Pipeline Viewer](https://clang.godbolt.org/z/5MP61jTvr) feature to verify all calls to `visit` were inlined. After the `SimplifyCFG` optimization pass the chained comparisons are now combined into a switch. If we do not force inlining, switches may already be generated during the earlier `InlinerPass` pass and increase the calculated inlining cost beyond the threshold, resulting in multiple jump tables.
 ```llvm
@@ -497,9 +497,7 @@ instead. We can [manually confirm](https://gcc.godbolt.org/z/G3YhP4Pq8) that thi
 ### Short-circuiting folds
 We already had a pack of indices before, so let's use a fold expression again. What we're looking for is an operator capable of [short circuiting](https://en.wikipedia.org/wiki/Short-circuit_evaluation). 
 
-C++ has two such operators - logical `and` ([expr.log.and/1](https://standards.pydong.org/c++/expr.log.and#1)) and logical `or` ([expr.log.or/1](https://standards.pydong.org/c++/expr.log.or#1)). 
-
-So let's fold over `or` instead.
+C++ has two such operators - logical `and` ([expr.log.and/1](https://standards.pydong.org/c++/expr.log.and#1)) and logical `or` ([expr.log.or/1](https://standards.pydong.org/c++/expr.log.or#1)). So let's fold over `or` instead.
 
 ```c++
 template <int... Is>
@@ -526,7 +524,7 @@ int visit<0, 1, 2, 3, 4, 5>(unsigned index)
   return static_cast<int &&>(value);
 }
 ```
-As [Compiler Explorer](https://gcc.godbolt.org/z/jGsxKPcxz) can confirm for us: this will convince GCC to generate a jump table. Awesome.
+As [Compiler Explorer](https://gcc.godbolt.org/z/981vYoE9b) can confirm for us: this will convince GCC to generate a jump table. Awesome.
 
 ### Generic visit
 Unfortunately making this generic is a little more difficult. 
@@ -542,7 +540,7 @@ using visit_result_t = std::invoke_result_t<F, std::variant_alternative_t<0,
 With this we can set up `visit`.
 ```c++
 template<typename F, typename V>
-constexpr decltype(auto) visit(F&& visitor, V&& variant){
+constexpr auto visit(F&& visitor, V&& variant){
   using return_type = visit_result_t<F, V>;
   constexpr auto size = std::variant_size_v<std::remove_cvref_t<V>>;
   return visit_impl<return_type>(std::make_index_sequence<size>(), 
@@ -557,7 +555,7 @@ Since we cannot have variables of type `void`, we need to special case for visit
 ```c++
 template <typename R, typename F, typename V, std::size_t... Idx>
   requires (std::same_as<R, void>)
-constexpr decltype(auto) visit_impl(std::index_sequence<Idx...>, F&& fnc, V&& variant) {
+constexpr void visit_impl(std::index_sequence<Idx...>, F&& fnc, V&& variant) {
     auto index = variant.index();
     if(((index == Idx ? std::forward<F>(fnc)(get<Idx>(std::forward<V>(variant))), true 
                       : false) || ...)){
@@ -577,12 +575,13 @@ However, the fold expression already tells us whether a visitor was found (and t
 
 ```c++
 template <typename R, typename F, typename V, std::size_t... Idx>
-constexpr decltype(auto) visit_impl(std::index_sequence<Idx...>, F&& fnc, V&& variant) {
+constexpr auto visit_impl(std::index_sequence<Idx...>, F&& fnc, V&& variant) {
   auto index = variant.index();
   union Container {
-    ~Container(){}
+    ~Container() = default;
+    ~Container() requires (not std::is_trivially_destructible_v<R>) {}
 
-    char dummy;
+    char dummy{};
     R value;
   } ret{};
 
@@ -599,33 +598,42 @@ constexpr decltype(auto) visit_impl(std::index_sequence<Idx...>, F&& fnc, V&& va
 ```
 
 #### Move-only return types
-Finally, we need to make sure this still works if the visitor returned an object of move-only type. This is a little more tricky. 
+Finally, we need to make sure this still works if the visitor returned an object of move-only type. 
 
-Instead of preparing a variable of appropriate type, we can instead create functions that do the visitor call for us and finally call the selected one.
-```c++
+This can be done by explicitly move-constructing a temporary `R` object directly in a return statement if we cannot copy-construct.
+```diff
 template <typename R, typename F, typename V, std::size_t... Idx>
-  requires (!std::same_as<R, void> && !std::is_copy_constructible_v<R>)
-constexpr decltype(auto) visit_impl(std::index_sequence<Idx...>, F&& fnc, V&& variant) {
-  auto const index = variant.index();
-  R (*fptr)(F&&, V&&) = nullptr;
-  
-  if(((Idx == index ? (fptr = +[](F&& fnc, V&& variant) -> R {
-                        return std::forward<F>(fnc)(get<Idx>(std::forward<V>(variant)));
-                      }, true) 
-                    : false) || ...)) {
-    // visitor found
-    return fptr(std::forward<F>(fnc), 
-              std::forward<V>(variant));
+constexpr auto visit_impl(std::index_sequence<Idx...>, F&& fnc, V&& variant) {
+  auto index = variant.index();
+  union Container {
+    ~Container() = default;
+    ~Container() requires (not std::is_trivially_destructible_v<R>) {}
+
+    char dummy{};
+    R value;
+  } ret{};
+
+  if(((index == Idx ? std::construct_at(&ret.value, 
+                          std::forward<F>(fnc)(get<Idx>(std::forward<V>(variant)))), true 
+                    : false) || ...)){
+    // found a visitor -> value is the active member
+-    return ret.value;
++    if constexpr (!std::is_copy_constructible_v<R>){
++      return R(std::move(ret.value));  
++    } else {
++      return ret.value;
++    }
   }
-  
+
   // no visitor found
   std::unreachable();
 }
 ```
 
-Unfortunately this quickly degrades to a call instead of a jump. Due to the rarity of move-only types this might however be acceptable.
+> Note that this still does not support copy-only return types.
+{: .prompt-info }
 
-Run the full example on [Compiler Explorer](https://godbolt.org/z/be46PoqsG).
+Run the full example on [Compiler Explorer](https://godbolt.org/z/4ozq6GWWs).
 
 ## Expansion statements
 So, can we do any better in C++26? Are there any C++26 features that could help with this?
@@ -676,7 +684,7 @@ int visit(int x) {
     return -1;
 }
 ```
-We can manually verify with [Compiler Explorer](tbd) that Clang optimizes this as intended.
+We can manually verify with [Compiler Explorer](https://godbolt.org/z/h1bG185Eb) that Clang optimizes this as intended.
 
 > At the time of writing "Opt Viewer" for clang-p2996 is broken due to a missing Compiler Explorer-specific patch.
 >
@@ -716,7 +724,7 @@ constexpr decltype(auto) visit(F&& fnc, V&& variant) {
   std::unreachable();
 }
 ```
-[Run on Compiler Explorer](https://godbolt.org/z/jh164cEM4)
+[Run on Compiler Explorer](https://godbolt.org/z/jW6WWP3E9)
 
 
 >For a real world example check out [rsl/variant](https://github.com/Tsche/rsl/blob/master/include/rsl/variant).
