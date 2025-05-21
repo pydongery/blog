@@ -9,14 +9,17 @@ This blog's main focus is on interesting things you can do in Python, C++ and ot
 # Authors
 ## Che
 
-My name is not actually Che, I'm currently 28 years old and live in Munich. I used to study games engineering at [TUM](https://www.tum.de/) and currently study computational linguistics at [LMU](https://www.lmu.de/), while also working as an embedded firmware engineer for a life sciences and lab automation company.
+My name is not actually Che, I'm currently 29 years old and live in Munich. I used to study games engineering at [TUM](https://www.tum.de/) and currently study computational linguistics at [LMU](https://www.lmu.de/), while also working in the embedded firmware team of a life sciences and lab automation company.
 
-I'm mostly interested in C++ "compile time" shenanigans, Python tomfoolery, RPC and whatever else seems odd but also oddly interesting. Other than that I do play bass in a couple of bands, look like metal Jesus and am a trained church organ player. 
+I'm mostly interested in metaprogramming, embedded stuff, compilers and Python shenanigans. Other than that I do play bass in a couple of bands, look like metal Jesus and am a trained church organ player. 
 
 Some of my recent projects include:
+- **[autoload](https://github.com/Tsche/autoload)**: Automatic symbol loading from dynamically loaded libraries.
+- **[erl](https://github.com/Tsche/cpp26_experiments)**: Reflection playground, lots of experimental utilities (ie. named `format` args, logging, command line argument parsing, RPC, ...)
+- **[rsl](https://github.com/Tsche/rsl)**: Experimental reflective reimplementations of various standard library facilities. Also adds a few experimental extensions.
 - **[repr](https://github.com/Tsche/repr) / [repr.wtf](https://repr.wtf)**: A C++ static reflection library that mimics Python's `repr()`.
 - **[magic_codec](https://github.com/Tsche/magic_codec) / [Python's Preprocessor](/posts/PythonsPreprocessor)**: A modular Python preprocessing utility that uses a custom codec.
-- **[slo::variant](https://github.com/Tsche/variant/tree/develop) / blog post TBD**: Mostly compliant `std::variant` implementation that does some experimental optimizations, including rearranging the underlying storage as a tree to reduce maximum recursion depth for alternative retrieval
+- **[slo::variant](https://github.com/Tsche/variant/tree/develop)**: Mostly compliant `std::variant` implementation that does some experimental optimizations, including rearranging the underlying storage as a tree to reduce maximum recursion depth for alternative retrieval
 - **[crashbench](https://github.com/Tsche/crashbench)**: Compile time benchmarking and diagnostic/death test utility. This uses a custom DSL to hide configuration in valid C++ attributes.
 - **[palgen](https://github.com/palliate/palgen) / [Docs](https://palgen.palliate.io)**: Command line tool built around a highly modular extension system. This is meant to simplify writing common utility scripts by reducing boilerplate a lot.
 - **[cpppp](https://github.com/Tsche/cpppp)**: C++ preprocessor that uses C++ as macro language.
