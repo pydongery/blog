@@ -498,24 +498,24 @@ anywhere in identifiers as an implementation extension.</p>
 discussion it was noted that allowing
 <code class="sourceCode cpp"><span class="er">$</span></code>
 in identifiers is a massive syntactic land-grab. However, due to the
-popularity of this extension it seems unrealistic that we can ever use
+popularity of this extension, it seems unrealistic that we can ever use
 <code class="sourceCode cpp"><span class="er">$</span></code>
 for anything that would conflict with $identifiers.</p>
 <h1 data-number="2" id="allow"><span class="header-section-number">2</span> Why not allow it
 unconditionally?<a href="#allow" class="self-link"></a></h1>
-<p>GCC notes in its documentation</p>
+<p>GCC notes in its documentation:</p>
 <blockquote>
 <p>However, dollar signs in identifiers are not supported on a few
 target machines, typically because the target assembler does not allow
 them. (<span class="citation" data-cites="GCC"><a href="https://gcc.gnu.org/onlinedocs/gcc/Dollar-Signs.html" role="doc-biblioref">[GCC documentation]</a></span>)</p>
 </blockquote>
-<p>Examples for such targets are <span class="citation" data-cites="RS6000"><a href="https://github.com/gcc-mirror/gcc/blob/master/gcc/config/rs6000/xcoff.h#L57" role="doc-biblioref">[RS/6000]</a></span> (because of the AIX
-assembler), <span class="citation" data-cites="AVR"><a href="https://github.com/gcc-mirror/gcc/blob/master/gcc/config/avr/avr.h#L480" role="doc-biblioref">[AVR]</a></span> and <span class="citation" data-cites="MMIX"><a href="https://github.com/gcc-mirror/gcc/blob/master/gcc/config/mmix/mmix.h#L792" role="doc-biblioref">[MMIX]</a></span>.</p>
-<p>In theory we could mandate
+<p>Examples of such targets are <span class="citation" data-cites="RS6000"><a href="https://github.com/gcc-mirror/gcc/blob/master/gcc/config/rs6000/xcoff.h#L57" role="doc-biblioref">[RS/6000]</a></span> (because of the AIX
+assembler), <span class="citation" data-cites="AVR"><a href="https://github.com/gcc-mirror/gcc/blob/master/gcc/config/avr/avr.h#L480" role="doc-biblioref">[AVR]</a></span>, and <span class="citation" data-cites="MMIX"><a href="https://github.com/gcc-mirror/gcc/blob/master/gcc/config/mmix/mmix.h#L792" role="doc-biblioref">[MMIX]</a></span>.</p>
+<p>In theory, we could mandate
 <code class="sourceCode cpp"><span class="er">$</span></code>
 to be valid in identifiers and ask compilers to work around such
 problematic assemblers in some way or another. However, the purpose of
-this paper is to align the standard with the implementation reality and
+this paper is to align the standard with implementation reality and
 C23.</p>
 <h1 data-number="3" id="motivation"><span class="header-section-number">3</span> Motivation<a href="#motivation" class="self-link"></a></h1>
 <p>Aside from aligning with C, there are a few more motivating uses.</p>
@@ -547,8 +547,8 @@ extern int Image_ER_ZI_Limit asm("Image$$ER_ZI$$Limit");
 repetition and instead actually allow such implementations to support
 dollars in identifiers directly.</p>
 <h2 data-number="3.2" id="macros"><span class="header-section-number">3.2</span> Macros<a href="#macros" class="self-link"></a></h2>
-<p>Another somewhat common use is in macro identifiers. Github search
-finds more than 5600 uses in code recognized as C++ (<span class="citation" data-cites="GHSEARCH"><a href="https://github.com/search?q=%22%23define+%24%22+language%3AC%2B%2B+&amp;type=code" role="doc-biblioref">[Github code search]</a></span>)</p>
+<p>Another somewhat common use is in macro identifiers. GitHub search
+finds more than 5600 uses in code recognized as C++ (<span class="citation" data-cites="GHSEARCH"><a href="https://github.com/search?q=%22%23define+%24%22+language%3AC%2B%2B+&amp;type=code" role="doc-biblioref">[GitHub code search]</a></span>)</p>
 For example consider <!--
 ```cpp
 #if MSVC
@@ -611,12 +611,13 @@ $inline(never) int bar(int, char) {
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre>
 </div>
-<p>As noted earlier, using $ in any identifiers that survive until the
-assembler takes over can be problematic with some targets. Since macros
-are long gone at this point, using dollars in macros is relatively
-safe.</p>
-<p>If used only for macros consistently, this has the benefit of making
-them visually stand out. Not only does this reduce chances of name
+<p>As noted earlier, using
+<code class="sourceCode cpp"><span class="er">$</span></code>
+in any identifiers that survive until the assembler takes over can be
+problematic with some targets. Since macros are long gone at that point,
+using dollars in macros is relatively safe.</p>
+<p>If used consistently only for macros, this has the benefit of making
+them visually stand out. Not only does this reduce the chances of name
 collisions, it also helps when surveying code - after all, macros come
 with sharp edges.</p>
 <h1 data-number="4" id="wording"><span class="header-section-number">4</span> Wording<a href="#wording" class="self-link"></a></h1>
@@ -651,7 +652,7 @@ property XID_Continue</div>
 XID_Continue are described by UAX #44 of the Unicode Standard.<span> —
 <em>end note</em> ]</span></p>
 </div>
-<p><span class="marginalizedparent"><a class="marginalized" href="#">1</a></span>
+<p><span class="marginalizedparent"><a class="marginalized">1</a></span>
 The program is ill-formed if an <em>identifier</em> does not conform to
 Normalization Form C as specified in the Unicode Standard.</p>
 <div class="note">
@@ -675,7 +676,7 @@ translation phase 7 (<span>5.10
 <em>end note</em> ]</span></p>
 </div>
 <div class="add" style="color: #006e28">
-<p><span class="marginalizedparent"><a class="marginalized" href="#">2</a></span>
+<p><span class="marginalizedparent"><a class="marginalized">2</a></span>
 The inclusion of
 <code class="sourceCode default">$</code>
 in <em>nondigit</em> is conditionally-supported.</p>
@@ -702,7 +703,7 @@ transform this document’s source from Markdown.</p>
 [GCC documentation] <a href="https://gcc.gnu.org/onlinedocs/gcc/Dollar-Signs.html"><div class="csl-block">https://gcc.gnu.org/onlinedocs/gcc/Dollar-Signs.html</div></a>
 </div>
 <div id="ref-GHSEARCH" class="csl-entry" role="doc-biblioentry">
-[Github code search] <a href="https://github.com/search?q=%22%23define+%24%22+language%3AC%2B%2B+&amp;type=code"><div class="csl-block">https://github.com/search?q=%22%23define+%24%22+language%3AC%2B%2B+&amp;type=code</div></a>
+[GitHub code search] <a href="https://github.com/search?q=%22%23define+%24%22+language%3AC%2B%2B+&amp;type=code"><div class="csl-block">https://github.com/search?q=%22%23define+%24%22+language%3AC%2B%2B+&amp;type=code</div></a>
 </div>
 <div id="ref-MMIX" class="csl-entry" role="doc-biblioentry">
 [MMIX] <a href="https://github.com/gcc-mirror/gcc/blob/master/gcc/config/mmix/mmix.h#L792"><div class="csl-block">https://github.com/gcc-mirror/gcc/blob/master/gcc/config/mmix/mmix.h#L792</div></a>
