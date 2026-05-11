@@ -1611,13 +1611,27 @@ This paper proposes making "$" in identifiers conditionally-supported to align w
 
 <p>Unfortunately the examples given in armlink's documentation are not valid C++.
 </p>
-<code-block><h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image</h->$$ER_ZI$$Limit; </code-block>
+<code-block><h- data-h=cmt_dlim>//</h-><h- data-h=cmt> oops, none of these are valid identifiers</h->
+<h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image</h->$$ER_ZI$$Base;
+<h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image</h->$$ER_ZI$$Limit;
+<h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image</h->$$ER_RO$$Base;
+<h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image</h->$$ER_RO$$Limit;
+<h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image</h->$$ER_RW$$Base;
+<h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image</h->$$ER_RW$$Limit;</code-block>
 
 <p>With GCC and Clang this can also be addressed by explicitly specifying the name used in assembler code (<a href=https://compiler-explorer.com/z/WE8TzTsav>Compiler Explorer</a>)
 </p>
-<code-block><h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image_ER_ZI_Limit</h-> <h- data-h=kw_ctrl>asm</h-><h- data-h=sym_par>(</h-><h- data-h=str_dlim>"</h-><h- data-h=str>Image$$ER_ZI$$Limit</h-><h- data-h=str_dlim>"</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h-></code-block>
+<code-block><h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image_ER_ZI_Base</h->  <h- data-h=kw_ctrl>asm</h-><h- data-h=sym_par>(</h-><h- data-h=str_dlim>"</h-><h- data-h=str>Image$$ER_ZI$$Base</h-><h- data-h=str_dlim>"</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h->
+<h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image_ER_ZI_Limit</h-> <h- data-h=kw_ctrl>asm</h-><h- data-h=sym_par>(</h-><h- data-h=str_dlim>"</h-><h- data-h=str>Image$$ER_ZI$$Limit</h-><h- data-h=str_dlim>"</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h->
+<h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image_ER_RO_Base</h->  <h- data-h=kw_ctrl>asm</h-><h- data-h=sym_par>(</h-><h- data-h=str_dlim>"</h-><h- data-h=str>Image$$ER_RO$$Base</h-><h- data-h=str_dlim>"</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h->
+<h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image_ER_RO_Limit</h-> <h- data-h=kw_ctrl>asm</h-><h- data-h=sym_par>(</h-><h- data-h=str_dlim>"</h-><h- data-h=str>Image$$ER_RW$$Limit</h-><h- data-h=str_dlim>"</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h->
+<h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image_ER_RW_Base</h->  <h- data-h=kw_ctrl>asm</h-><h- data-h=sym_par>(</h-><h- data-h=str_dlim>"</h-><h- data-h=str>Image$$ER_RW$$Base</h-><h- data-h=str_dlim>"</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h->
+<h- data-h=kw>extern</h-> <h- data-h=kw_type>int</h-> <h- data-h=name>Image_ER_RW_Limit</h-> <h- data-h=kw_ctrl>asm</h-><h- data-h=sym_par>(</h-><h- data-h=str_dlim>"</h-><h- data-h=str>Image$$ER_RW$$Limit</h-><h- data-h=str_dlim>"</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h-></code-block>
 
-<p>However, it seems much cleaner and less error-prone to avoid repetition and instead actually allow such implementations to support dollars in identifiers directly.
+<p>However, it seems much cleaner and overall less error-prone (did you notice the typo?) to avoid repetition and instead actually allow such implementations to support dollars in identifiers directly.
+</p>
+
+<p>Likewise, if you target RISC-V you may have come across <code><h- data-h=name>__global_pointer</h->$</code> before. The same argument as before applies, however it will still result in a reserved identifier due to the double underscore.
 </p>
 <h3 id=macros><a class=para href=#macros></a>3.2. Macros</h3>
 
@@ -1636,7 +1650,10 @@ This paper proposes making "$" in identifiers conditionally-supported to align w
 <h- data-h=name_mac>#define $inline(_opt)     $inline_##_opt</h->
 <h- data-h=name_mac>#define $template         template for (auto _ : "")</h->
 <h- data-h=name_mac>#define $pi               3</h->
-<h- data-h=name_mac>#define $assert(...)                                                        </h-><h- data-h=name_mac>    do {                                                                    </h-><h- data-h=name_mac>        ((__VA_ARGS__) ? (void)0 : throw std::runtime_error(#__VA_ARGS__)); </h-><h- data-h=name_mac>    } while (false)</h->
+<h- data-h=name_mac>#define $assert(...)                                                        </h-><h- data-h=name_mac>\</h-><h- data-h=name_mac>
+    do {                                                                    </h-><h- data-h=name_mac>\</h-><h- data-h=name_mac>
+        ((__VA_ARGS__) ? (void)0 : throw std::runtime_error(#__VA_ARGS__)); </h-><h- data-h=name_mac>\</h-><h- data-h=name_mac>
+    } while (false)</h->
 
 $inline(always) <h- data-h=kw_type>int</h-> <h- data-h=name>foo</h-><h- data-h=sym_par>(</h-><h- data-h=kw_type>int</h-> <h- data-h=name>a</h-><h- data-h=sym_par>)</h-> <h- data-h=sym_brac>{</h->
     $assert(a <h- data-h=sym_op>&gt;</h-> <h- data-h=num>0</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h->
@@ -1651,9 +1668,54 @@ $inline(never) <h- data-h=kw_type>int</h-> <h- data-h=name>bar</h-><h- data-h=sy
     <h- data-h=sym_brac>}</h->
 <h- data-h=sym_brac>}</h-></code-block>
 
-<p>As noted earlier, using $ in any identifiers that survive until the assembler takes over can be problematic with some targets. Since macros are long gone at that point, using dollars in macros is relatively safe.
+<p>As noted earlier, using $ in any identifiers that survive until the assembler takes over can be problematic with some targets. Since macros are long gone at that point, using dollars in macros is relatively safe. This essentially gives us another identifier namespace that is visually distinct from regular identifiers.
 </p>
-<p>If used consistently only for macros, this has the benefit of making them visually stand out. Not only does this reduce the chances of name collisions, it also helps when surveying code - after all, macros come with sharp edges.
+<p>If used consistently only for macros, this has the benefit of making them visually stand out. We can validate consistent use easily by using a custom clang-tidy check (see <a href=https://github.com/tsche/dollar-macro-check>example implementation</a>).
+</p>
+<p>Not only does this reduce the chances of name collisions, it also helps when surveying code - after all, macros come with sharp edges.
+</p>
+<h3 id=generated-code><a class=para href=#generated-code></a>3.3. Generated code</h3>
+<p>In a similar fashion, dollars in identifiers can be useful for generated code.
+</p>
+<p>While there has always been C++ code generators, with the recent adoption of <a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg21/docs/papers/2025/p2996r13%2ehtml">[P2996]</a> and its limited reification features such as <code><h- data-h=name>define_aggregate</h-></code>, there is an ever increasing need for ways to avoid name collisions stemming from generated/reified code. 
+</p>
+<p>As a result of that, it's more than likely that we'll continue to see all sorts of creative mangling/uglification schemes - (conditionally) allowing the use of <code>$</code> provides a viable alternative.
+</p>
+<p>For example, consider a simple struct to struct of arrays transformation (adopted from the struct to struct of arrays example in <a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg21/docs/papers/2025/p2996r13%2ehtml">[P2996]</a>):
+</p><code-block><h- data-h=kw>template</h-> <h- data-h=sym_op>&lt;</h-><h- data-h=kw>typename</h-> <h- data-h=name>T</h-><h- data-h=sym_punc>,</h-> <h- data-h=name_type>size_t</h-> <h- data-h=name>N</h-><h- data-h=sym_op>&gt;</h->
+<h- data-h=kw>struct</h-> <h- data-h=name>struct_of_arrays_impl</h-> <h- data-h=sym_brac>{</h->
+  <h- data-h=kw>struct</h-> <h- data-h=name>impl</h-><h- data-h=sym_punc>;</h->
+
+  <h- data-h=kw>consteval</h-> <h- data-h=sym_brac>{</h->
+    <h- data-h=kw>auto</h-> <h- data-h=name>ctx</h-> <h- data-h=sym_op>=</h-> <h- data-h=name>std</h-><h- data-h=sym_op>::</h-><h- data-h=name>meta</h-><h- data-h=sym_op>::</h-><h- data-h=name>access_context</h-><h- data-h=sym_op>::</h-><h- data-h=name>current</h-><h- data-h=sym_par>(</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h->
+    <h- data-h=kw_ctrl>for</h-> <h- data-h=sym_par>(</h-><h- data-h=name>std</h-><h- data-h=sym_op>::</h-><h- data-h=name>meta</h-><h- data-h=sym_op>::</h-><h- data-h=name>info</h-> <h- data-h=name>member</h-> <h- data-h=sym_punc>:</h-> <h- data-h=name>nonstatic_data_members_of</h-><h- data-h=sym_par>(</h-><h- data-h=sym_op>^^</h-><h- data-h=name>T</h-><h- data-h=sym_punc>,</h-> <h- data-h=name>std</h-><h- data-h=sym_op>::</h-><h- data-h=name>meta</h-><h- data-h=sym_op>::</h-><h- data-h=name>access_context</h-><h- data-h=sym_op>::</h-><h- data-h=name>unprivileged</h-><h- data-h=sym_par>(</h-><h- data-h=sym_par>)</h-><h- data-h=sym_par>)</h-><h- data-h=sym_par>)</h-> <h- data-h=sym_brac>{</h->
+        <h- data-h=kw>auto</h-> <h- data-h=name>array_type</h-> <h- data-h=sym_op>=</h-> <h- data-h=name>substitute</h-><h- data-h=sym_par>(</h-><h- data-h=sym_op>^^</h-><h- data-h=name>std</h-><h- data-h=sym_op>::</h-><h- data-h=name>array</h-><h- data-h=sym_punc>,</h-> <h- data-h=sym_brac>{</h-><h- data-h=name>type_of</h-><h- data-h=sym_par>(</h-><h- data-h=name>member</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>,</h-> <h- data-h=name>std</h-><h- data-h=sym_op>::</h-><h- data-h=name>meta</h-><h- data-h=sym_op>::</h-><h- data-h=name>reflect_constant</h-><h- data-h=sym_par>(</h-><h- data-h=name>N</h-><h- data-h=sym_par>)</h-><h- data-h=sym_brac>}</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h->
+        <h- data-h=kw>auto</h-> <h- data-h=name>mem_descr</h-> <h- data-h=sym_op>=</h-> <h- data-h=name>data_member_spec</h-><h- data-h=sym_par>(</h-><h- data-h=name>array_type</h-><h- data-h=sym_punc>,</h-> <h- data-h=sym_brac>{</h-><h- data-h=sym_op>.</h-><h- data-h=name>name</h-> <h- data-h=sym_op>=</h-> <h- data-h=name>identifier_of</h-><h- data-h=sym_par>(</h-><h- data-h=name>member</h-><h- data-h=sym_par>)</h-><h- data-h=sym_brac>}</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h->
+        <h- data-h=name>new_members</h-><h- data-h=sym_op>.</h-><h- data-h=name>push_back</h-><h- data-h=sym_par>(</h-><h- data-h=name>mem_descr</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h->
+    <h- data-h=sym_brac>}</h->
+
+    <h- data-h=name>define_aggregate</h-><h- data-h=sym_par>(</h-><h- data-h=sym_op>^^</h-><h- data-h=name>impl</h-><h- data-h=sym_punc>,</h-> <h- data-h=name>new_members</h-><h- data-h=sym_par>)</h-><h- data-h=sym_punc>;</h->
+  <h- data-h=sym_brac>}</h->
+<h- data-h=sym_brac>}</h-><h- data-h=sym_punc>;</h->
+
+<h- data-h=kw>template</h-> <h- data-h=sym_op>&lt;</h-><h- data-h=kw>typename</h-> <h- data-h=name>T</h-><h- data-h=sym_punc>,</h-> <h- data-h=name_type>size_t</h-> <h- data-h=name>N</h-><h- data-h=sym_op>&gt;</h->
+<h- data-h=kw>using</h-> <h- data-h=name>struct_of_arrays</h-> <h- data-h=sym_op>=</h-> <h- data-h=name>struct_of_arrays_impl</h-><h- data-h=sym_op>&lt;</h-><h- data-h=name>T</h-><h- data-h=sym_punc>,</h-> <h- data-h=name>N</h-><h- data-h=sym_op>&gt;</h-><h- data-h=sym_op>::</h-><h- data-h=name>impl</h-><h- data-h=sym_punc>;</h-></code-block>
+
+<p>If we, for some reason, attempt to inherit from this generated type, we might run into collisions.
+</p><code-block><h- data-h=kw>struct</h-> <h- data-h=name>Particle</h-> <h- data-h=sym_brac>{</h->
+    <h- data-h=name>vec3</h-> <h- data-h=name>position</h-><h- data-h=sym_punc>;</h->
+    <h- data-h=name>vec3</h-> <h- data-h=name>velocity</h-><h- data-h=sym_punc>;</h->
+    <h- data-h=kw_type>float</h-> <h- data-h=name>lifetime</h-><h- data-h=sym_punc>;</h->
+<h- data-h=sym_brac>}</h-><h- data-h=sym_punc>;</h->
+
+<h- data-h=kw>template</h-> <h- data-h=sym_op>&lt;</h-><h- data-h=name_type>size_t</h-> <h- data-h=name>N</h-><h- data-h=sym_op>&gt;</h->
+<h- data-h=kw>struct</h-> <h- data-h=name>Particles</h-> <h- data-h=sym_punc>:</h-> <h- data-h=name>struct_of_arrays</h-><h- data-h=sym_op>&lt;</h-><h- data-h=name>Particle</h-><h- data-h=sym_punc>,</h-> <h- data-h=name>N</h-><h- data-h=sym_op>&gt;</h-> <h- data-h=sym_brac>{</h->
+    <h- data-h=name>vec3</h-> <h- data-h=name>position</h-><h- data-h=sym_par>(</h-><h- data-h=name_type>size_t</h-> <h- data-h=name>i</h-><h- data-h=sym_par>)</h-> <h- data-h=kw>const</h-><h- data-h=sym_punc>;</h->  <h- data-h=cmt_dlim>//</h-><h- data-h=cmt> oops, collides with generated position member</h->
+    <h- data-h=name>vec3</h-> <h- data-h=name>velocity</h-><h- data-h=sym_par>(</h-><h- data-h=name_type>size_t</h-> <h- data-h=name>i</h-><h- data-h=sym_par>)</h-> <h- data-h=kw>const</h-><h- data-h=sym_punc>;</h->  <h- data-h=cmt_dlim>//</h-><h- data-h=cmt> also collides</h->
+    <h- data-h=kw_type>float</h-> <h- data-h=name>lifetime</h-><h- data-h=sym_par>(</h-><h- data-h=name_type>size_t</h-> <h- data-h=name>i</h-><h- data-h=sym_par>)</h-> <h- data-h=kw>const</h-><h- data-h=sym_punc>;</h-> <h- data-h=cmt_dlim>//</h-><h- data-h=cmt> also collides</h->
+<h- data-h=sym_brac>}</h-><h- data-h=sym_punc>;</h-></code-block>
+
+<p>While this is arguably a naming issue (that could and probably should be <code><h- data-h=name>get_position</h-></code> instead), these sorts of problems can generally be avoided by uglifying identifiers in generated code. Conditionally allowing dollars gives users a few more options to make those generated names more unique and less likely to collide with user code.
 </p>
 <h2 id=wording><a class=para href=#wording></a>4. Wording</h2>
 
@@ -1729,7 +1791,6 @@ The identifiers in Table 4 have a special meaning when appearing in a certain co
 <hr/>
 <h2 id=references><a class=para href=#references></a>6. References</h2>
 
-
 <div class=bib><div id=bib-item-N5032 class=bib-item>
 <a href="https://wg21%2elink/n5032">[N5032]</a>
 <span class=bib-author>Thomas Köppe.</span>
@@ -1738,6 +1799,9 @@ The identifiers in Table 4 have a special meaning when appearing in a certain co
 <a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg21/docs/papers/2025/n5032%2epdf" class=bib-link>https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/n5032.pdf</a></div><div id="bib-item-WG14 N3145" class=bib-item>
 <a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg14/www/docs/n3145%2epdf">[WG14 N3145]</a>
 <span class=bib-title>$ in Identifiers v2</span>
-<a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg14/www/docs/n3145%2epdf" class=bib-link>https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3145.pdf</a></div></div>
+<a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg14/www/docs/n3145%2epdf" class=bib-link>https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3145.pdf</a></div><div id=bib-item-P2996 class=bib-item>
+<a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg21/docs/papers/2025/p2996r13%2ehtml">[P2996]</a>
+<span class=bib-title>Reflection for C++26</span>
+<a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg21/docs/papers/2025/p2996r13%2ehtml" class=bib-link>https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html</a></div></div>
 </main></body>
 </html>
