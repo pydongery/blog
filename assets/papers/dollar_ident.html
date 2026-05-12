@@ -1571,7 +1571,7 @@ if (theme !== null) {
 </div>
 
 <abstract-block><p><intro-></intro-> 
-This paper proposes making "$" in identifiers conditionally-supported to align with C23.
+This paper proposes making <code>$</code> in identifiers conditionally-supported.
 </p></abstract-block>
 
 <div class=toc><div class=toc-num data-level=3>0.1</div>
@@ -1583,7 +1583,7 @@ This paper proposes making "$" in identifiers conditionally-supported to align w
 <div class=toc-num data-level=3>2.1</div>
 <a href=#why-not-allow-it-unconditionally><h3>Why not allow it unconditionally?</h3></a>
 <div class=toc-num data-level=2>3</div>
-<a href=#motivation><h2>Motivation</h2></a>
+<a href=#additional-motivation><h2>Additional Motivation</h2></a>
 <div class=toc-num data-level=3>3.1</div>
 <a href=#linker-and-toolchain-symbol-conventions><h3>Linker and toolchain symbol conventions</h3></a>
 <div class=toc-num data-level=4>3.1.1</div>
@@ -1620,16 +1620,17 @@ This paper proposes making "$" in identifiers conditionally-supported to align w
 </p><blockquote>
 <p>  In GNU C, you may normally use dollar signs in identifier names. This is because many traditional C implementations allow such identifiers. 
 </p></blockquote>
-<p>Amongst many other compilers this is supported by <a href="https://learn.microsoft.com/en-us/cpp/cpp/identifiers-cpp?view=msvc-170#:~:text=The%20dollar%20sign%20%24%20is%20a%20valid%20identifier%20character%20in%20the%20Microsoft%20C%2B%2B%20compiler%20%28MSVC%29%2E">MSVC</a>, <a href=https://gcc.gnu.org/onlinedocs/gcc/Dollar-Signs.html>GCC</a> (going back to at least <a href=https://godbolt.org/z/Gf53hv7s5>GCC 1.27</a>!), Clang, EDG (might need opt-in), icx and nvc++ (see <a href=https://compiler-explorer.com/z/bxKEMx54o>Compiler Explorer</a>).
-<br/></p>
+<p>Amongst many other compilers this is supported by <a href="https://learn.microsoft.com/en-us/cpp/cpp/identifiers-cpp?view=msvc-170#:~:text=The%20dollar%20sign%20%24%20is%20a%20valid%20identifier%20character%20in%20the%20Microsoft%20C%2B%2B%20compiler%20%28MSVC%29%2E">MSVC</a>, <a href=https://gcc.gnu.org/onlinedocs/gcc/Dollar-Signs.html>GCC</a> (going back to at least <a href=https://godbolt.org/z/Gf53hv7s5>GCC 1.27</a>!), Clang, EDG (might need opt-in), icx and nvc++ (see <a href=https://compiler-explorer.com/z/bxKEMx54o>Compiler Explorer</a>). Some of these implementations make it configurable, for example GCC and Clang both have <a href=https://clang.llvm.org/docs/ClangCommandLineReference.html#cmdoption-clang-fdollars-in-identifiers><code><h- data-h=sym_op>-</h-><h- data-h=name>f</h-><h- data-h=sym_sqr>[</h-><h- data-h=name>no</h-><h- data-h=sym_op>-</h-><h- data-h=sym_sqr>]</h-><h- data-h=name>dollars</h-><h- data-h=sym_op>-</h-><h- data-h=name>in</h-><h- data-h=sym_op>-</h-><h- data-h=name>identifiers</h-></code></a> to enable or disable this feature (which defaults to enable).
+</p>
+<p><br/></p>
 
-<p>In recent years, C has made quite a few changes to what they consider an identifier. The original rules allowed any implementation-defined characters, the revised ones did not. To address this, <a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg14/www/docs/n3145%2epdf">[WG14 N3145]</a> introduced a carve-out to allow <code>$</code> anywhere in identifiers as an implementation extension.
+<p>In recent years, C has made quite a few changes to what they consider an identifier. The original rules allowed any implementation-defined characters, the revised ones did not (see <a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg14/www/docs/n2836%2epdf">[WG14 N2836]</a>). To address this, <a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg14/www/docs/n3145%2epdf">[WG14 N3145]</a> introduced a carve-out to allow <code>$</code> anywhere in identifiers as an implementation extension.
 </p>
 <p>In C++ however, the situation is different. The C++ standard does not acknowledge <code>$</code> in identifiers at all. As a result, the use of <code>$</code> in identifiers pedantically renders your code ill-formed. In practice, however, almost all implementations support it as a non-standard extension.
 </p>
 <h2 id=proposed-change><a class=para href=#proposed-change></a>2. Proposed change</h2>
 
-<p>To align with C and implementation reality, this paper proposes making the use of <code>$</code> in identifiers conditionally-supported. This would not make <code>$</code> identifiers portable, but it would at least make them explicitly recognized by the standard when supported by the implementation.
+<p>To align with C and implementation reality, this paper proposes making the use of <code>$</code> in identifiers conditionally-supported. This would not make <code>$</code> in identifiers portable, but it would at least make them explicitly recognized by the standard when supported by the implementation.
 </p>
 <p><a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg14/www/docs/n3145%2epdf">[WG14 N3145]</a> mentions that during discussion it was noted that allowing <code>$</code> in identifiers is a massive syntactic land-grab. However, due to the popularity of this extension, it seems unrealistic that we can ever use <code>$</code> for anything that would conflict with <code>$identifiers</code>.
 </p>
@@ -1643,12 +1644,9 @@ This paper proposes making "$" in identifiers conditionally-supported to align w
 
 <p>Examples of such targets are <a href=https://github.com/gcc-mirror/gcc/blob/master/gcc/config/rs6000/xcoff.h#L57>RS/6000</a>, <a href=https://github.com/gcc-mirror/gcc/blob/master/gcc/config/avr/avr.h#L480>AVR</a>, and <a href=https://github.com/gcc-mirror/gcc/blob/master/gcc/config/mmix/mmix.h#L792>MMIX</a>.
 </p>
-<p>In theory, we could mandate <code>$</code> to be valid in identifiers and ask compilers to work around such problematic targets in some way or another. However, that's a rather big ask -  it seems more sensible to instead align the C++ standard with implementation reality and C23.
+<p>In theory, we could mandate <code>$</code> to be valid in identifiers and ask compilers to work around such problematic targets in some way or another. However, that's a rather big ask - especially given the popularity and history of this extension, making stronger support guarantees than C <i>and</i> asking for more than what implementations have been supporting for decades does not seem wise.
 </p>
-<h2 id=motivation><a class=para href=#motivation></a>3. Motivation</h2>
-
-<p>Aside from aligning with C and implementation reality, there are a few more motivating uses.
-</p>
+<h2 id=additional-motivation><a class=para href=#additional-motivation></a>3. Additional Motivation</h2>
 <h3 id=linker-and-toolchain-symbol-conventions><a class=para href=#linker-and-toolchain-symbol-conventions></a>3.1. Linker and toolchain symbol conventions</h3>
 <h4 id=linker-conventions><a class=para href=#linker-conventions></a>3.1.1. Linker conventions</h4>
 <p>Some embedded toolchains expose identifiers containing <code>$</code> through linker-defined symbols and custom linker conventions.
@@ -1681,18 +1679,18 @@ This paper proposes making "$" in identifiers conditionally-supported to align w
 <p>However, it seems much cleaner and overall less error-prone (did you notice the typo?) to avoid repetition and instead actually allow such implementations to support dollars in identifiers directly.
 </p>
 
-<p>Likewise, if you target RISC-V you may have come across <code><h- data-h=name>__global_pointer</h->$</code> before. The same argument as before applies, however it will still result in a reserved identifier due to the double underscore.
+<p>Likewise, if you target RISC-V you may have come across <code><h- data-h=name>__global_pointer</h->$</code> before (8.5.1 of <a href="https://lists%2eriscv%2eorg/g/tech-psabi/attachment/61/0/riscv-abi%2epdf">[RISC-V ELF Specification]</a>). The same argument as before applies - however, in this case it will still result in a reserved identifier due to the double underscore.
 </p>
 <h4 id=symbol-patching><a class=para href=#symbol-patching></a>3.1.2. Symbol patching</h4>
-<p>Furthermore, armlink supports <code>$Sub$$</code> and <code>$Super$$</code> symbol patterns for <a href=https://developer.arm.com/documentation/dui0803/f/Accessing-and-Managing-Symbols-with-armlink/Use-of--Super---and--Sub---to-patch-symbol-definitions>patching existing definitions</a>, and this convention is used for startup hooks, C library retargeting, and runtime initializations. <a href=https://github.com/lvgl/lv_port_raspberry_pi_pico_mdk/blob/cfa86618e87b9d62afc56db8aabdaa5d192aa67d/project/mdk/wrapper/pico/platform.h#L406>For example</a>, RP2040 MDK headers define the following wrapper macros:
+<p>Furthermore, armlink supports <code>$Sub$$</code> and <code>$Super$$</code> symbol patterns to allow <a href=https://developer.arm.com/documentation/dui0803/f/Accessing-and-Managing-Symbols-with-armlink/Use-of--Super---and--Sub---to-patch-symbol-definitions>patching existing definitions</a>. This feature is commonly used for startup hooks, C library retargeting and other situations where an existing symbol cannot be modified. <a href=https://github.com/lvgl/lv_port_raspberry_pi_pico_mdk/blob/cfa86618e87b9d62afc56db8aabdaa5d192aa67d/project/mdk/wrapper/pico/platform.h#L406>For example</a>, RP2040 MDK headers define the following wrapper macros:
 </p>
 <code-block><h- data-h=name_mac>#   define WRAPPER_FUNC(__FUNC)     $Sub$$##__FUNC</h->
 <h- data-h=name_mac>#   define REAL_FUNC(__FUNC)        $Super$$## __FUNC</h-></code-block>
 
-<p>As with linker-defined <code><h- data-h=name>Image</h->$$...</code> symbols, these examples do not make $ identifiers portable C++. They do, however, show that <code>$</code> containing identifiers are a common part of documented embedded toolchain practice rather than merely accidental parser behavior.
+<p>As with linker-defined <code><h- data-h=name>Image</h->$$...</code> symbols, there are still some portability concerns. It does however show that <code>$</code> containing identifiers are a common part of documented embedded toolchain practice rather than merely accidental parser behavior.
 </p>
 <h3 id=stricter-domains><a class=para href=#stricter-domains></a>3.2. Stricter Domains</h3>
-<p>In some domains, such as defense, aerospace, avionics, and other safety or mission-critical systems, conformance to the C++ International Standard may be a contractual requirement. <sup><a href="https://www%2estroustrup%2ecom/JSF-AV-rules%2epdf"></a></sup> <sup><a href="https://misra%2eorg%2euk/product/misra-cpp2023/"></a></sup> <sup><a href="https://www%2eautosar%2eorg/fileadmin/standards/R17-03_R1%2e1%2e0/AP/AUTOSAR_RS_CPP14Guidelines%2epdf"></a></sup>
+<p>In some domains (such as defense, aerospace and avionics) that deal with safety or mission-critical systems, conformance to the C++ International Standard may be a contractual requirement. <sup><a href="https://www%2estroustrup%2ecom/JSF-AV-rules%2epdf"></a></sup> <sup><a href="https://misra%2eorg%2euk/product/misra-cpp2023/"></a></sup> <sup><a href="https://www%2eautosar%2eorg/fileadmin/standards/R17-03_R1%2e1%2e0/AP/AUTOSAR_RS_CPP14Guidelines%2epdf"></a></sup>
 For example, the requirements for the <a href="https://www%2egdaee%2emil%2egr/wp-content/uploads/2021/09/5_2%2epdf">[TRITON]</a> project, as specified in NATO IFB-CO-13859-TRITON (Unclassified), state:
 </p>
 <blockquote>
@@ -1707,7 +1705,7 @@ For example, the requirements for the <a href="https://www%2egdaee%2emil%2egr/wp
 
 <p>In such environments, using a compiler extension is not merely an engineering portability concern. It can become a compliance issue. Deviations from the contracted obligations may need to be recorded in project coding guidelines, reviewed by QA, justified to the customer or main contractor, and in some cases handled through contract amendments or formal deviation processes. In such stricter domains, the bureaucracy and paperwork required for such changes can easily take months. 
 </p>
-<p>Making the use of <code>$</code> in identifiers conditionally-supported would not make such identifiers portable, nor would it require every implementation to accept them. However, it would change the status of the construct from an unstandardized implementation extension into a construct explicitly recognized by the C++ Standard, when supported by the implementation.
+<p>As mentioned before, making the use of <code>$</code> in identifiers conditionally-supported would not make such identifiers portable, nor would it require every implementation to accept them. However, it would change the status of the construct from an unstandardized implementation extension into a construct explicitly recognized by the C++ Standard, when supported by the implementation.
 </p>
 <p>This distinction is useful for stricter environments. A project could specify that it uses C++ as defined by ISO/IEC 14882, together with the conditionally-supported use of <code>$</code> in identifiers on implementations that document support for it. This is easier to audit, easier to encode in project guidelines, and easier to justify than relying on undocumented or folklore implementation behavior.
 </p>
@@ -1759,7 +1757,7 @@ $inline(never) <h- data-h=kw_type>int</h-> <h- data-h=name>bar</h-><h- data-h=sy
 </p>
 <p>While there has always been C++ code generators, with the recent adoption of <a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg21/docs/papers/2025/p2996r13%2ehtml">[P2996]</a> and its limited reification features such as <code><h- data-h=name>define_aggregate</h-></code>, there is an ever increasing need for ways to avoid name collisions stemming from generated/reified code. 
 </p>
-<p>As a result of that, it's more than likely that we'll continue to see all sorts of creative mangling/uglification schemes - (conditionally) allowing the use of <code>$</code> provides a viable alternative.
+<p>As a result of that, it's more than likely that we'll continue to see all sorts of creative mangling/uglification schemes - (conditionally) allowing the use of <code>$</code> provides another viable alternative.
 </p>
 <p>For example, consider a simple struct to struct of arrays transformation (adopted from the struct to struct of arrays example in <a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg21/docs/papers/2025/p2996r13%2ehtml">[P2996]</a>):
 </p><code-block><h- data-h=kw>template</h-> <h- data-h=sym_op>&lt;</h-><h- data-h=kw>typename</h-> <h- data-h=name>T</h-><h- data-h=sym_punc>,</h-> <h- data-h=name_type>size_t</h-> <h- data-h=name>N</h-><h- data-h=sym_op>&gt;</h->
@@ -1897,6 +1895,12 @@ The identifiers in Table 4 have a special meaning when appearing in a certain co
 <a href="https://www%2eautosar%2eorg/fileadmin/standards/R17-03_R1%2e1%2e0/AP/AUTOSAR_RS_CPP14Guidelines%2epdf">[AUTOSARCPP14]</a>
 <span class=bib-author>AUTOSAR.</span>
 <span class=bib-title>Guidelines for the use of the C++14 language in critical and safety-related systems</span>
-<a href="https://www%2eautosar%2eorg/fileadmin/standards/R17-03_R1%2e1%2e0/AP/AUTOSAR_RS_CPP14Guidelines%2epdf" class=bib-link>https://www.autosar.org/fileadmin/standards/R17-03_R1.1.0/AP/AUTOSAR_RS_CPP14Guidelines.pdf</a></div></div>
+<a href="https://www%2eautosar%2eorg/fileadmin/standards/R17-03_R1%2e1%2e0/AP/AUTOSAR_RS_CPP14Guidelines%2epdf" class=bib-link>https://www.autosar.org/fileadmin/standards/R17-03_R1.1.0/AP/AUTOSAR_RS_CPP14Guidelines.pdf</a></div><div id="bib-item-WG14 N2836" class=bib-item>
+<a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg14/www/docs/n2836%2epdf">[WG14 N2836]</a>
+<span class=bib-title>Identifier Syntax using Unicode Standard Annex 31</span>
+<a href="https://www%2eopen-std%2eorg/jtc1/sc22/wg14/www/docs/n2836%2epdf" class=bib-link>https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2836.pdf</a></div><div id="bib-item-RISC-V ELF Specification" class=bib-item>
+<a href="https://lists%2eriscv%2eorg/g/tech-psabi/attachment/61/0/riscv-abi%2epdf">[RISC-V ELF Specification]</a>
+<span class=bib-title>RISC-V ABIs Specification</span>
+<a href="https://lists%2eriscv%2eorg/g/tech-psabi/attachment/61/0/riscv-abi%2epdf" class=bib-link>https://lists.riscv.org/g/tech-psabi/attachment/61/0/riscv-abi.pdf</a></div></div>
 </main></body>
 </html>
