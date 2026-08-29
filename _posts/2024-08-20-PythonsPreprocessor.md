@@ -3,7 +3,7 @@ title: Python's Preprocessor
 date: 2024-08-19T04:20:00+02:00
 categories: [Python]
 tags: [Python, shenanigans, preprocessing, language extensions]
-author: Che
+author: Matthias Wippich
 ---
 
 Every now and then you hear outrageous claims such as "Python has no preprocessor". 
