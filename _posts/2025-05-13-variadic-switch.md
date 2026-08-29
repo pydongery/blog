@@ -3,7 +3,7 @@ title: Variadic Switch
 date: 2025-05-13T02:20:00+00:00
 categories: [C++]
 tags: [C++, Metaprogramming, C++26]
-author: Matthias Wippich
+author: Tsche
 bokeh: true
 ---
 Several years back I found an interesting question on [Reddit](https://www.reddit.com/r/cpp/comments/6vyqra/variadic_switch_case/). Essentially the author asks why there is no way to expand a pack into a sequence of case labels followed by a statement. It was illustrated with the following imaginary syntax:
