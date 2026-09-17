@@ -1,0 +1,98 @@
+<a
+  class="cross-site-link"
+  href="https://cpp.tips"
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label="Wrong language? How about C++ malarkey instead?"
+>
+  <svg class="cross-site-logo" viewBox="0 0 706 740" width="32" height="32" aria-hidden="true">
+    <defs>
+      <linearGradient id="cross-site-c-gradient" x1="0" y1="0" x2="1" y2="1">
+        <stop class="cross-site-logo__light" offset="0"></stop>
+        <stop class="cross-site-logo__dark" offset="1"></stop>
+      </linearGradient>
+    </defs>
+    <path
+      d="M334 2Q340 0 346 3L651 173Q656 176 655 182Q654 187 649 190L520 264Q516 267 512 264A208 208 0 1 0 506 488Q510 485 515 488L635 555Q641 559 640 564Q639 569 634 572L347 736Q340 740 333 736L19 560Q2 551 2 538L2 210Q2 196 18 187Z"
+      fill="url(#cross-site-c-gradient)"></path>
+    <path
+      class="cross-site-logo__plus"
+      d="M416 296Q411 296 411 301V351H364Q359 351 359 356V403Q359 408 364 408H411V457Q411 462 416 462H463Q468 462 468 457V408H515Q520 408 520 403V356Q520 351 515 351H468V301Q468 296 463 296Z"
+    ></path>
+    <path
+      class="cross-site-logo__plus"
+      d="M601 296Q596 296 596 301V351H549Q544 351 544 356V403Q544 408 549 408H596V457Q596 462 601 462H648Q653 462 653 457V408H700Q705 408 705 403V356Q705 351 700 351H653V301Q653 296 648 296Z"
+    ></path>
+  </svg>
+  <span>Wrong language? How about C++ malarkey instead?</span>
+</a>
+
+<style>
+  .cross-site-link {
+    position: fixed;
+    left: 0.75rem;
+    bottom: 0.75rem;
+    z-index: 35;
+    display: block;
+    filter: drop-shadow(0 0.5rem 0.55rem rgba(26, 20, 47, 0.2));
+  }
+
+  .cross-site-logo {
+    display: block;
+  }
+
+  .cross-site-logo__light {
+    stop-color: #3db8ff;
+  }
+
+  .cross-site-logo__dark {
+    stop-color: #2654d7;
+  }
+
+  .cross-site-logo__plus {
+    fill: #102c5f;
+  }
+
+  :global([data-theme='astro-blog-dark']) .cross-site-logo__light {
+    stop-color: #b5e8ff;
+  }
+
+  :global([data-theme='astro-blog-dark']) .cross-site-logo__dark {
+    stop-color: #668cff;
+  }
+
+  :global([data-theme='astro-blog-dark']) .cross-site-logo__plus {
+    fill: #fff;
+    stroke: #d9efff;
+    stroke-width: 5px;
+    paint-order: stroke fill;
+  }
+
+  .cross-site-link span {
+    position: absolute;
+    left: calc(100% + 0.5rem);
+    top: 50%;
+    width: max-content;
+    max-width: calc(100vw - 4.5rem);
+    padding: 0.25rem 0.45rem;
+    border: 1px solid var(--color-base-300);
+    border-radius: 0.3rem;
+    color: var(--color-base-content);
+    background: var(--color-base-100);
+    font: 0.62rem var(--font-mono);
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-0.4rem, -50%);
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .cross-site-link:hover span,
+  .cross-site-link:focus-visible span {
+    visibility: visible;
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+</style>

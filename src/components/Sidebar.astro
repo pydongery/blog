@@ -1,0 +1,12 @@
+---
+import SharedSidebar from '@tsche/astro-blog-theme/components/Sidebar.astro';
+import BrandMark from './BrandMark.astro';
+---
+
+<SharedSidebar primaryKeys={['articles', 'updates', 'about']}>
+  <BrandMark slot="brand-mark" />
+  <Fragment slot="brand-text">
+    <strong><span>Pydong</span></strong>
+    <small>Shenanigans in Python</small>
+  </Fragment>
+</SharedSidebar>

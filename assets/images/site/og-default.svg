@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title description">
+  <title id="title">Pydong</title>
+  <desc id="description">Python shenanigans and other technical malarkey.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17233a"/>
+      <stop offset="1" stop-color="#376f9f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#background)"/>
+  <rect x="48" y="48" width="1104" height="534" rx="27" fill="#f8fafc"/>
+  <image href="icon.svg" x="110" y="155" width="320" height="320"/>
+  <g font-family="Source Sans 3, system-ui, sans-serif">
+    <text x="485" y="300" font-size="112" font-weight="700">
+      <tspan fill="#3776ab">Pydong</tspan>
+    </text>
+    <text x="490" y="365" fill="#526079" font-size="28">Python shenanigans and technical malarkey.</text>
+  </g>
+</svg>

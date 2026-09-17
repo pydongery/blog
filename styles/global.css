@@ -1,0 +1,23 @@
+@import '@tsche/astro-blog-theme/styles.css';
+
+/* Tailwind scans site-owned templates and content from this entry point. */
+@source '../src';
+@source '../content';
+
+/* Subtle cool-tinted surfaces distinguish Pydong in both color schemes. */
+[data-theme='astro-blog-light'] {
+  --color-base-200: #edf4f2;
+  --color-base-300: #d6e3df;
+  --color-primary: #246963;
+  --ink-blue: #246963;
+  --article-color: #246963;
+  --update-color: #526780;
+}
+
+[data-theme='astro-blog-dark'] {
+  --color-base-200: #191f20;
+  --color-primary: #86bbb3;
+  --ink-blue: #86bbb3;
+  --article-color: #86bbb3;
+  --update-color: #a3b3cd;
+}

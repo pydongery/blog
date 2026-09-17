@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="706" height="740" viewBox="0 0 706 740">
+  <defs>
+    <!-- Clean geometric outline: straight outer runs, smooth circular inner cutout, rounded outer corners -->
+    <path id="cPath" d="M 334 2 Q 340 0 346 3 L 651 173 Q 656 176 655 182 Q 654 187 649 190 L 520 264 Q 516 267 512 264 A 208 208 0 1 0 506 488 Q 510 485 515 488 L 635 555 Q 641 559 640 564 Q 639 569 634 572 L 347 736 Q 340 740 333 736 L 19 560 Q 2 551 2 538 L 2 210 Q 2 196 18 187 Z"/>
+    <clipPath id="clipC"><use href="#cPath"/></clipPath>
+
+    <!-- Gradients taken from the pixel-fitted version -->
+    <linearGradient id="g_top_main" gradientUnits="userSpaceOnUse" x1="23.312" y1="89.918" x2="93.964" y2="362.436" color-interpolation="sRGB">
+      <stop offset="0.000%" stop-color="#3793EE"/><stop offset="8.333%" stop-color="#3793EE"/><stop offset="16.667%" stop-color="#3892ED"/>
+      <stop offset="25.000%" stop-color="#3791EB"/><stop offset="33.333%" stop-color="#368EE8"/><stop offset="41.667%" stop-color="#348BE4"/>
+      <stop offset="50.000%" stop-color="#3288DF"/><stop offset="58.333%" stop-color="#3084DA"/><stop offset="66.667%" stop-color="#2E80D6"/>
+      <stop offset="75.000%" stop-color="#2B7CD1"/><stop offset="83.333%" stop-color="#2979CD"/><stop offset="91.667%" stop-color="#2573C6"/>
+      <stop offset="100.000%" stop-color="#1F69BA"/>
+    </linearGradient>
+    <linearGradient id="g_upper_left" gradientUnits="userSpaceOnUse" x1="76.648" y1="-27.238" x2="-111.763" y2="39.717" color-interpolation="sRGB">
+      <stop offset="0.000%" stop-color="#2879CD"/><stop offset="8.333%" stop-color="#2979CC"/><stop offset="16.667%" stop-color="#2776CA"/>
+      <stop offset="25.000%" stop-color="#2573C5"/><stop offset="33.333%" stop-color="#236FC1"/><stop offset="41.667%" stop-color="#216BBD"/>
+      <stop offset="50.000%" stop-color="#2069B9"/><stop offset="58.333%" stop-color="#1E65B4"/><stop offset="66.667%" stop-color="#1C61AF"/>
+      <stop offset="75.000%" stop-color="#1A5DA9"/><stop offset="83.333%" stop-color="#1859A4"/><stop offset="91.667%" stop-color="#15559E"/>
+      <stop offset="100.000%" stop-color="#14529A"/>
+    </linearGradient>
+    <linearGradient id="g_middle" gradientUnits="userSpaceOnUse" x1="79.814" y1="-13.301" x2="-80.584" y2="13.429" color-interpolation="sRGB">
+      <stop offset="0.000%" stop-color="#104389"/><stop offset="8.333%" stop-color="#0F438B"/><stop offset="16.667%" stop-color="#10458D"/>
+      <stop offset="25.000%" stop-color="#10448D"/><stop offset="33.333%" stop-color="#10448C"/><stop offset="41.667%" stop-color="#10438A"/>
+      <stop offset="50.000%" stop-color="#0F4287"/><stop offset="58.333%" stop-color="#0F4084"/><stop offset="66.667%" stop-color="#0F3F80"/>
+      <stop offset="75.000%" stop-color="#0E3E7D"/><stop offset="83.333%" stop-color="#0D3C78"/><stop offset="91.667%" stop-color="#0C3972"/>
+      <stop offset="100.000%" stop-color="#0C366D"/>
+    </linearGradient>
+    <linearGradient id="g_lower_dark" gradientUnits="userSpaceOnUse" x1="170.501" y1="-54.252" x2="-147.646" y2="46.980" color-interpolation="sRGB">
+      <stop offset="0.000%" stop-color="#143E87"/><stop offset="8.333%" stop-color="#133B80"/><stop offset="16.667%" stop-color="#123978"/>
+      <stop offset="25.000%" stop-color="#103671"/><stop offset="33.333%" stop-color="#0E336A"/><stop offset="41.667%" stop-color="#0D3164"/>
+      <stop offset="50.000%" stop-color="#0D2F5F"/><stop offset="58.333%" stop-color="#0D2E5D"/><stop offset="66.667%" stop-color="#0D2E5B"/>
+      <stop offset="75.000%" stop-color="#0D2C58"/><stop offset="83.333%" stop-color="#0D2B55"/><stop offset="91.667%" stop-color="#0D2B54"/>
+      <stop offset="100.000%" stop-color="#0E2B52"/>
+    </linearGradient>
+    <linearGradient id="g_lower_right" gradientUnits="userSpaceOnUse" x1="709.718" y1="434.436" x2="442.175" y2="270.666" color-interpolation="sRGB">
+      <stop offset="0.000%" stop-color="#1E64B3"/><stop offset="8.333%" stop-color="#1D60B0"/><stop offset="16.667%" stop-color="#1B5DAC"/>
+      <stop offset="25.000%" stop-color="#1A59A7"/><stop offset="33.333%" stop-color="#1855A1"/><stop offset="41.667%" stop-color="#16519C"/>
+      <stop offset="50.000%" stop-color="#154E98"/><stop offset="58.333%" stop-color="#134B93"/><stop offset="66.667%" stop-color="#12488E"/>
+      <stop offset="75.000%" stop-color="#104489"/><stop offset="83.333%" stop-color="#0F4183"/><stop offset="91.667%" stop-color="#0E3E7D"/>
+      <stop offset="100.000%" stop-color="#0E3C78"/>
+    </linearGradient>
+
+    <linearGradient id="plus1" gradientUnits="userSpaceOnUse" x1="0" y1="296" x2="0" y2="463">
+      <stop offset="0.000%" stop-color="#0D2A51"/><stop offset="16.667%" stop-color="#0D2B52"/><stop offset="33.333%" stop-color="#0D2B53"/>
+      <stop offset="50.000%" stop-color="#0D2B53"/><stop offset="66.667%" stop-color="#0D2B53"/><stop offset="83.333%" stop-color="#0D2A52"/>
+      <stop offset="100.000%" stop-color="#0D2A51"/>
+    </linearGradient>
+    <linearGradient id="plus2" gradientUnits="userSpaceOnUse" x1="0" y1="296" x2="0" y2="463">
+      <stop offset="0.000%" stop-color="#0D2A51"/><stop offset="16.667%" stop-color="#0D2A51"/><stop offset="33.333%" stop-color="#0D2A51"/>
+      <stop offset="50.000%" stop-color="#0D2A51"/><stop offset="66.667%" stop-color="#0D2A51"/><stop offset="83.333%" stop-color="#0D2A51"/>
+      <stop offset="100.000%" stop-color="#0D2A51"/>
+    </linearGradient>
+  </defs>
+
+  <g shape-rendering="geometricPrecision">
+    <use href="#cPath" fill="url(#g_top_main)"/>
+    <g clip-path="url(#clipC)">
+      <!-- internal color regions matched to the source proportions -->
+      <polygon points="-100,-100 180,-11 44,361 -100,450" fill="url(#g_upper_left)"/>
+      <polygon points="-100,439 145,301 145,456 -100,618" fill="url(#g_middle)"/>
+      <polygon points="-100,618 145,456 249,368 425,688 500,800 -100,800" fill="url(#g_lower_dark)"/>
+      <!-- revert to the broader original lower-right facet so its top-left and bottom-left corners align again -->
+      <polygon points="235,555 212,381 700,550 560,800 404,688" fill="url(#g_lower_right)"/>
+    </g>
+
+    <!-- clean, crisp outline -->
+    <use href="#cPath" fill="none" stroke="#59B8FF" stroke-width="0.55" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+
+    <path d="M 416 296 Q 411 296 411 301 L 411 351 L 364 351 Q 359 351 359 356 L 359 403 Q 359 408 364 408 L 411 408 L 411 457 Q 411 462 416 462 L 463 462 Q 468 462 468 457 L 468 408 L 515 408 Q 520 408 520 403 L 520 356 Q 520 351 515 351 L 468 351 L 468 301 Q 468 296 463 296 Z" fill="url(#plus1)" stroke="#3D6E9F" stroke-width="0.7" stroke-linejoin="round"/>
+    <path d="M 416 296 Q 411 296 411 301 L 411 351 L 364 351 Q 359 351 359 356 L 359 403 Q 359 408 364 408 L 411 408 L 411 457 Q 411 462 416 462 L 463 462 Q 468 462 468 457 L 468 408 L 515 408 Q 520 408 520 403 L 520 356 Q 520 351 515 351 L 468 351 L 468 301 Q 468 296 463 296 Z" transform="translate(185 296) scale(1 1.0060240964) translate(0 -296)" fill="url(#plus2)" stroke="#3D6E9F" stroke-width="0.7" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+  </g>
+</svg>
