@@ -72,10 +72,11 @@ Let's do the decode function first. `codecs.utf_8_decode` can be used for the ac
 
 <Aside type="caution">
 
-Uncaught exceptions will not be printed with traceback to the terminal as you would expect. 
+Uncaught exceptions will not be printed with traceback to the terminal as you would expect.
 Instead the interpreter will simply yield `SyntaxError: encoding problem: your_codec` with no helpful extra information as to why there was a problem with your codec.
 
 It is therefore advisable to catch exceptions coming from your preprocessor and explicitly print them before reraising.
+
 </Aside>
 
 ```py
