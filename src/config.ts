@@ -1,10 +1,6 @@
 import iconImg from '../assets/images/site/icon.svg';
 import ogDefaultImg from '../assets/images/site/og-default.png';
-import type {
-  GiscusConfig,
-  NavigationConfig,
-  SiteConfig,
-} from '@tsche/astro-blog-theme/config';
+import type { GiscusConfig, NavigationConfig, SiteConfig } from '@tsche/astro-blog-theme/config';
 
 /**
  * Global site configuration.
@@ -51,7 +47,7 @@ export const SITE: SiteConfig = {
       label: 'Articles',
       singularLabel: 'Article',
       description: 'Long-form Python articles',
-      eyebrow: 'Long form',
+      preview: 'description',
       landingPageLimit: 5,
       postsPerPage: 8,
     },
@@ -59,7 +55,7 @@ export const SITE: SiteConfig = {
       label: 'Updates',
       singularLabel: 'Update',
       description: 'Python project and site updates',
-      eyebrow: 'Recent changes',
+      preview: 'description',
       landingPageLimit: 5,
       postsPerPage: 8,
     },
@@ -94,12 +90,20 @@ export const SITE: SiteConfig = {
   autoOgImage: true,
   analytics: {
     umami: {
-      websiteId: import.meta.env.PUBLIC_UMAMI_WEBSITE_ID ?? '',
-      scriptUrl: 'https://cloud.umami.is/script.js',
+      websiteId: 'd78c80b0-58f9-4e2a-9e42-a3ab2dc6f879',
+      scriptUrl: 'https://analytics.cpp.social/script.js',
       domains: ['pydong.org'],
       respectDoNotTrack: true,
     },
   },
+
+  redirects: {
+    '/posts/variadic-switch/': 'https://cpp.tips/articles/variadic-switch/',
+    '/posts/ExpansionTricks/': 'https://cpp.tips/articles/expansion-tricks/',
+    '/posts/KwArgs/': 'https://cpp.tips/articles/kwargs/',
+    '/posts/PythonsPreprocessor/': 'https://pydong.org/articles/pythons-preprocessor/',
+  },
+
   // ==========================================
   // ❗ CAN BREAK THINGS (EDIT WITH CAUTION)
   // ==========================================
@@ -120,7 +124,7 @@ export const NAV = {
     { label: 'Tags', href: '/tags' },
     { label: 'Categories', href: '/categories' },
     { label: 'RSS', href: '/rss.xml', icon: 'lucide:rss' },
-    { label: 'Sitemap', href: '/sitemap-index.xml' },
+    { label: 'Sitemap', href: '/sitemap.xml' },
   ],
 } as const satisfies NavigationConfig;
 

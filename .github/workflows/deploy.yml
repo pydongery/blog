@@ -32,8 +32,6 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build with Astro
-        env:
-          PUBLIC_UMAMI_WEBSITE_ID: ${{ vars.PUBLIC_UMAMI_WEBSITE_ID }}
         run: bun run build
 
       - name: Upload artifact
